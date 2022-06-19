@@ -29,6 +29,12 @@
 
   </controllers>
 
+  <!-- ****************** -->
+  <!-- * Loop functions * -->
+  <!-- ****************** -->
+  <loop_functions library="build/loop_functions/custom_loop_functions/libcustom_loop_functions"
+                  label="custom_functions" />
+
   <!-- *********************** -->
   <!-- * Arena configuration * -->
   <!-- *********************** -->
