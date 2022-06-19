@@ -16,8 +16,8 @@
   <!-- *************** -->
   <controllers>
 
-    <epuck_obstacleavoidance_controller id="fdc"
-                                        library="build/controllers/epuck_obstacleavoidance/libepuck_obstacleavoidance.so">
+    <custom_controller id="fdc" 
+      library="build/controllers/custom_controller/libcustom_controller.so">
       <actuators>
         <differential_steering implementation="default" />
       </actuators>
@@ -25,7 +25,7 @@
         <proximity implementation="default" show_rays="true" />
       </sensors>
       <params velocity="5" />
-    </epuck_obstacleavoidance_controller>
+    </custom_controller>
 
   </controllers>
 
