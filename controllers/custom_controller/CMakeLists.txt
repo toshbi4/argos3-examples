@@ -1,5 +1,0 @@
-add_library(custom_controller MODULE custom_controller.h custom_controller.cpp)
-target_link_libraries(custom_controller
-  argos3core_simulator
-  argos3plugin_simulator_myepuck
-  argos3plugin_simulator_genericrobot)
