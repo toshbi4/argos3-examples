@@ -32,12 +32,7 @@
   <!-- *********************** -->
   <!-- * Arena configuration * -->
   <!-- *********************** -->
-  <arena size="20, 1, 1" positional_index="grid" positional_grid_size="25,25,1">
-    <foot-bot id="fb">
-      <body position="-9,0,0" orientation="0,0,0"/>
-      <controller config="test_controller"/>
-    </foot-bot>
-  </arena>
+  <arena size="20, 200, 1" positional_index="grid" positional_grid_size="25,25,1" />
 
   <!-- ******************* -->
   <!-- * Physics engines * -->

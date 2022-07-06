@@ -11,7 +11,7 @@ namespace argos {
 
 namespace argos {
 
-    using mcs = std::chrono::microseconds;
+   using mcs = std::chrono::microseconds;
 
    class CTestLoopFunctions : public CLoopFunctions {
 
@@ -24,6 +24,7 @@ namespace argos {
       virtual ~CTestLoopFunctions() {}
 
       virtual bool IsExperimentFinished() override;
+      virtual void Init(TConfigurationNode& t_tree);
 
    private:
 
@@ -34,6 +35,11 @@ namespace argos {
                   std::chrono::high_resolution_clock::now().time_since_epoch());
           return us;
       }
+
+      void PlaceLine(const CVector2& c_center,
+                     UInt32 un_robots,
+                     Real f_distance,
+                     UInt32 un_id_start);
 
       const static CVector3 TARGET_POSITION;
       const static Real THRESHOLD;
