@@ -40,3 +40,4 @@ add_subdirectory(loop_functions)
 add_subdirectory(embedding)
 
 add_subdirectory(sim_test)
+add_subdirectory(wms)

@@ -1,0 +1,5 @@
+add_library(wms_controller SHARED wms_controller.h wms_controller.cpp)
+target_link_libraries(wms_controller
+  argos3core_simulator
+  argos3plugin_simulator_footbot
+  argos3plugin_simulator_genericrobot)
