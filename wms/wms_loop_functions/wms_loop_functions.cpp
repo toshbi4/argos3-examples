@@ -54,8 +54,15 @@ void WmsLoopFunctions::Init(TConfigurationNode& t_node) {
       for(itDistr = itDistr.begin(&t_node);
           itDistr != itDistr.end();
           ++itDistr) {
+
+          /* Get current node */
+          TConfigurationNode& tDistr = *itDistr;
+
           if(itDistr->Value() == "workspace") {
               std::cout << "workspase was found." << std::endl;
+              CVector2 cCenter;
+              GetNodeAttribute(tDistr, "center", cCenter);
+              std::cout << cCenter.X << std::endl;
           }
       }
 
