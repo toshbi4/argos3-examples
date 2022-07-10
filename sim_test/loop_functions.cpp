@@ -38,7 +38,7 @@ static const std::string FB_CONTROLLER    = "test_controller";
 
     void CTestLoopFunctions::Init(TConfigurationNode& t_tree) {
 
-        PlaceLine(CVector2(-9, -9), 500, 0.2, 0);
+        PlaceLine(CVector2(-9, -50), 500, 0.2, 0);
     }
 
     void CTestLoopFunctions::PlaceLine(const CVector2& c_start,

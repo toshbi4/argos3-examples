@@ -32,7 +32,7 @@
   <!-- *********************** -->
   <!-- * Arena configuration * -->
   <!-- *********************** -->
-  <arena size="20, 200, 1" positional_index="grid" positional_grid_size="25,25,1" />
+  <arena size="20, 100, 1" positional_index="grid" positional_grid_size="25,25,1" />
 
   <!-- ******************* -->
   <!-- * Physics engines * -->
@@ -53,7 +53,14 @@
   <!-- * Visualization * -->
   <!-- ****************** -->
   <visualization>
-    <qt-opengl show_boundary="false"/>
+    <qt-opengl>
+      <camera>
+        <placements>
+          <placement index="0" position="0,0,200" look_at="0,0,0" up="1,0,0" lens_focal_length="65" />
+        </placements>
+      </camera>
+    </qt-opengl>
+
   </visualization>
 
 </argos-configuration>
