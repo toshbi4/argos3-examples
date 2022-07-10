@@ -1,0 +1,69 @@
+<?xml version="1.0" ?>
+<argos-configuration>
+
+  <!-- ************************* -->
+  <!-- * General configuration * -->
+  <!-- ************************* -->
+  <framework>
+    <system threads="0" />
+    <experiment length="0" ticks_per_second="10" random_seed="0" />
+
+    <profiling file="profile_visual2D.txt"
+               format="human_readable"
+               truncate_file="true" />
+
+  </framework>
+  
+  <!-- *************** -->
+  <!-- * Controllers * -->
+  <!-- *************** -->
+  <controllers>
+    <test_controller library="@CMAKE_CURRENT_BINARY_DIR@/libpipuck_drive_forward_dynamics_controller"
+                     id="test_controller">
+      <actuators>
+        <pipuck_differential_drive implementation="default" />
+      </actuators>
+      <sensors />
+      <params />
+    </test_controller>
+  </controllers>
+
+  <!-- ****************** -->
+  <!-- * Loop functions * -->
+  <!-- ****************** -->
+  <loop_functions library="@CMAKE_CURRENT_BINARY_DIR@/libpipuck_drive_forward_dynamics_loop_functions"
+                  label="test_loop_functions" />
+
+  <!-- *********************** -->
+  <!-- * Arena configuration * -->
+  <!-- *********************** -->
+  <arena size="20, 100, 1" positional_index="grid" positional_grid_size="25,25,1" />
+
+    <!-- ******************* -->
+    <!-- * Physics engines * -->
+    <!-- ******************* -->
+    <physics_engines>
+      <dynamics2d id="dyn2d" iterations="20">
+      </dynamics2d>
+    </physics_engines>
+
+  <!-- ********* -->
+  <!-- * Media * -->
+  <!-- ********* -->
+  <media />
+
+  <!-- ****************** -->
+  <!-- * Visualization * -->
+  <!-- ****************** -->
+  <visualization>
+    <qt-opengl>
+      <camera>
+        <placements>
+          <placement index="0" position="0,0,200" look_at="0,0,0" up="1,0,0" lens_focal_length="65" />
+        </placements>
+      </camera>
+    </qt-opengl>
+
+  </visualization>
+
+</argos-configuration>
