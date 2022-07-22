@@ -84,6 +84,19 @@
            source="loop_functions"
            pixels_per_meter="50" />
 
+    <box id="wall_north" size="20,0.1,0.1" movable="false">
+      <body position="0,7,0" orientation="0,0,0" />
+    </box>
+    <box id="wall_south" size="20,0.1,0.1" movable="false">
+      <body position="0,-7,0" orientation="0,0,0" />
+    </box>
+    <box id="wall_east" size="0.1,15,0.1" movable="false">
+      <body position="9.5,0,0" orientation="0,0,0" />
+    </box>
+    <box id="wall_west" size="0.1,15,0.1" movable="false">
+      <body position="-9.5,0,0" orientation="0,0,0" />
+    </box>
+
     <distribute>
       <position method="uniform" min="4,-6.5,0" max="9,6.5,0" />
       <orientation method="uniform" min="0,0,0" max="360,0,0" />

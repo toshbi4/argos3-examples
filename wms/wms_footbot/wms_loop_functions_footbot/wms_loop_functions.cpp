@@ -8,8 +8,8 @@
 /****************************************/
 
 WmsLoopFunctions::WmsLoopFunctions() :
-   m_cForagingArenaSideX(-10.0f, 10.0f),
-   m_cForagingArenaSideY(-7.5f, 7.5f),
+   m_cForagingArenaSideX(-8.5f, 8.5f),
+   m_cForagingArenaSideY(-6.0f, 6.0f),
    m_pcFloor(NULL),
    m_pcRNG(NULL),
    m_unCollectedFood(0)
