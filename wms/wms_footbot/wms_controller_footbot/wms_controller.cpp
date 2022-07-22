@@ -152,34 +152,42 @@ void WmsController::Init(TConfigurationNode& t_node) {
 
 void WmsController::setCoordinates(CVector2& cPos, CQuaternion& cOrient, CVector2& cGoalPos){
 
-    // yaw (z-axis rotation)
-    double siny_cosp = 2 * (cOrient.GetW() * cOrient.GetZ() + cOrient.GetX() * cOrient.GetY());
-    double cosy_cosp = 1 - 2 * (cOrient.GetY() * cOrient.GetY() + cOrient.GetZ() * cOrient.GetZ());
-    double yaw = std::atan2(siny_cosp, cosy_cosp);
-    double cos_yaw = cos(yaw); //radians
-    double sin_yaw = sin(yaw); //radians
+    if (m_sFoodData.HasFoodItem){
 
-    double sin_theta = - cos_yaw; // yaw = theta + 90
-    double cos_theta = sin_yaw; // yaw = theta + 90
+        speed_test.Set(0.0f, 0.0f);
 
-//    Real rot_values[4]{cos(yaw), sin(yaw), -sin(yaw), cos(yaw)};
-//    CMatrix<2, 2> rot(rot_values);
-    CVector2 goalPos(cGoalPos.GetX() - cPos.GetX(), cGoalPos.GetY() - cPos.GetY());
+    } else {
 
-    CMatrix<2, 1> localVec; //= (static_cast<CMatrix<1, 2>>(goalPos) * rot/* + static_cast<CMatrix<1, 2>>(cPos)*/).GetTransposed();
+        // yaw (z-axis rotation)
+        double siny_cosp = 2 * (cOrient.GetW() * cOrient.GetZ() + cOrient.GetX() * cOrient.GetY());
+        double cosy_cosp = 1 - 2 * (cOrient.GetY() * cOrient.GetY() + cOrient.GetZ() * cOrient.GetZ());
+        double yaw = std::atan2(siny_cosp, cosy_cosp);
+        double cos_yaw = cos(yaw); //radians
+        double sin_yaw = sin(yaw); //radians
+
+        double sin_theta = - cos_yaw; // yaw = theta + 90
+        double cos_theta = sin_yaw; // yaw = theta + 90
+
+    //    Real rot_values[4]{cos(yaw), sin(yaw), -sin(yaw), cos(yaw)};
+    //    CMatrix<2, 2> rot(rot_values);
+        CVector2 goalPos(cGoalPos.GetX() - cPos.GetX(), cGoalPos.GetY() - cPos.GetY());
+
+        CMatrix<2, 1> localVec; //= (static_cast<CMatrix<1, 2>>(goalPos) * rot/* + static_cast<CMatrix<1, 2>>(cPos)*/).GetTransposed();
 
 
-    localVec(0) = goalPos.GetX()*cos_theta + goalPos.GetY()*sin_theta;
-    localVec(1) = -goalPos.GetX()*sin_theta + goalPos.GetY()*cos_theta;
+        localVec(0) = goalPos.GetX()*cos_theta + goalPos.GetY()*sin_theta;
+        localVec(1) = -goalPos.GetX()*sin_theta + goalPos.GetY()*cos_theta;
 
-    std::cout << "---" << std::endl;
-    std::cout << "yaw = " << yaw << std::endl;
-    std::cout << "cos(yaw) = " << cos_theta << std::endl;
-    std::cout << "sin(yaw) = " << sin_theta << std::endl;
-    std::cout << "localCoords: " << localVec(0) << " " << localVec(1) << std::endl;
-    std::cout << "GoalPos: " << goalPos.GetX() << " " << goalPos.GetY() << std::endl;
+        // std::cout << "---" << std::endl;
+        // std::cout << "yaw = " << yaw << std::endl;
+        // std::cout << "cos(yaw) = " << cos_theta << std::endl;
+        // std::cout << "sin(yaw) = " << sin_theta << std::endl;
+        // std::cout << "localCoords: " << localVec(0) << " " << localVec(1) << std::endl;
+        // std::cout << "GoalPos: " << goalPos.GetX() << " " << goalPos.GetY() << std::endl;
 
-    speed_test.Set(localVec(0), localVec(1));
+        speed_test.Set(localVec(0), localVec(1));
+
+    }
 };
 
 /****************************************/
@@ -187,7 +195,7 @@ void WmsController::setCoordinates(CVector2& cPos, CQuaternion& cOrient, CVector
 
 void WmsController::ControlStep() {
     CVector2 speed {0, 2.0};
-    ////std::cout << speed_test.GetX() << " " << speed_test.GetY() << std::endl;
+    //std::cout << speed_test.GetX() << " " << speed_test.GetY() << std::endl;
     SetWheelSpeedsFromLocalVector(speed_test);
     //SetWheelSpeedsFromLocalVector(speed);
 }
@@ -245,7 +253,7 @@ void WmsController::SetWheelSpeedsFromLocalVector(const CVector2& c_heading) {
    /* Clamp the speed so that it's not greater than MaxSpeed */
    Real fBaseAngularWheelSpeed = Min<Real>(fHeadingLength, m_sWheelTurningParams.MaxSpeed);
 
-   std::cout << cHeadingAngle << std::endl;
+   // std::cout << cHeadingAngle << std::endl;
 
    /* State transition logic */
    if(m_sWheelTurningParams.TurningMechanism == SWheelTurningParams::HARD_TURN) {

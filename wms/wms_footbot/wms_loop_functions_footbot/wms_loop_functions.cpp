@@ -39,6 +39,7 @@ void WmsLoopFunctions::Init(TConfigurationNode& t_node) {
       CSpace::TMapPerType& m_cFootbots = GetSpace().GetEntitiesByType("foot-bot");
       std::cout << m_cFootbots.size() << std::endl;
       uint16_t robots_num = m_cFootbots.size();
+      m_unCollectedFood = robots_num;
 
       /* Distribute uniformly the items in the environment */
       for(UInt32 i = 0; i < robots_num; ++i) {
@@ -118,13 +119,7 @@ CColor WmsLoopFunctions::GetFloorColor(const CVector2& c_position_on_plane) {
 
 void WmsLoopFunctions::PreStep() {
    /* Logic to pick and drop food items */
-   /*
-    * If a robot is in the nest, drop the food item
-    * If a robot is on a food item, pick it
-    * Each robot can carry only one food item per time
-    */
-   UInt32 unWalkingFBs = 0;
-   UInt32 unRestingFBs = 0;
+
    /* Check whether a robot is on a food item */
    CSpace::TMapPerType& m_cFootbots = GetSpace().GetEntitiesByType("foot-bot");
 
@@ -132,13 +127,13 @@ void WmsLoopFunctions::PreStep() {
    for(CSpace::TMapPerType::iterator it = m_cFootbots.begin();
        it != m_cFootbots.end();
        ++it) {
-       robot_id += 1;
+
+      robot_id += 1;
       /* Get handle to foot-bot entity and controller */
       CFootBotEntity& cFootBot = *any_cast<CFootBotEntity*>(it->second);
       WmsController& cController = dynamic_cast<WmsController&>(cFootBot.GetControllableEntity().GetController());
-      /* Count how many foot-bots are in which state */
-      if(! cController.IsResting()) ++unWalkingFBs;
-      else ++unRestingFBs;
+
+
       /* Get the position of the foot-bot on the ground as a CVector2 */
       CVector2 cPos;
       CQuaternion cOrient;
@@ -147,58 +142,30 @@ void WmsLoopFunctions::PreStep() {
                cFootBot.GetEmbodiedEntity().GetOriginAnchor().Position.GetY());
       cOrient = cFootBot.GetEmbodiedEntity().GetOriginAnchor().Orientation;
 
-
-
       cController.setCoordinates(cPos, cOrient, m_cGoalsPos[robot_id]);
 
       /* Get food data */
       WmsController::SFoodData& sFoodData = cController.GetFoodData();
       /* The foot-bot has a food item */
       if(sFoodData.HasFoodItem) {
-         /* Check whether the foot-bot is in the nest */
-         if(cPos.GetX() > 8.0f) {
-            /* Place a new food item on the ground */
-            m_cGoalsPos[sFoodData.FoodItemIdx].Set(/*m_pcRNG->Uniform(m_cForagingArenaSideX)*/5.0,
-                                                  /*m_pcRNG->Uniform(m_cForagingArenaSideY)*/0.0);
-            /* Drop the food item */
-            sFoodData.HasFoodItem = false;
-            sFoodData.FoodItemIdx = 0;
-            ++sFoodData.TotalFoodItems;
-            /* Increase the energy and food count */
-            ++m_unCollectedFood;
-            /* The floor texture must be updated */
-            m_pcFloor->SetChanged();
-         }
+
       }
       else {
-         /* The foot-bot has no food item */
-         /* Check whether the foot-bot is out of the nest */
-         if(cPos.GetX() < 8.0f) {
-            /* Check whether the foot-bot is on a food item */
-            bool bDone = false;
-            for(size_t i = 0; i < m_cGoalsPos.size() && !bDone; ++i) {
-               if((cPos - m_cGoalsPos[i]).SquareLength() < m_fFoodSquareRadius) {
-                  /* If so, we move that item out of sight */
-                  m_cGoalsPos[i].Set(100.0f, 100.f);
-                  /* The foot-bot is now carrying an item */
-                  sFoodData.HasFoodItem = true;
-                  sFoodData.FoodItemIdx = i;
-                  /* The floor texture must be updated */
-                  m_pcFloor->SetChanged();
-                  /* We are done */
-                  bDone = true;
-               }
-            }
+          /* Check whether the foot-bot is on a food item */
+          bool bDone = false;
+          for(size_t i = 0; i < m_cGoalsPos.size() && !bDone; ++i) {
+             if((cPos - m_cGoalsPos[i]).SquareLength() < m_fFoodSquareRadius) {
+                /* The foot-bot is now carrying an item */
+                sFoodData.HasFoodItem = true;
+                sFoodData.FoodItemIdx = i;
+                --m_unCollectedFood;
+                std::cout << m_unCollectedFood << std::endl;
+                /* We are done */
+                bDone = true;
+             }
          }
       }
    }
-   /* Update energy expediture due to walking robots */
-   /* Output stuff to file */
-   m_cOutput << GetSpace().GetSimulationClock() << "\t"
-             << unWalkingFBs << "\t"
-             << unRestingFBs << "\t"
-             << m_unCollectedFood << "\t"
-             << 0 << std::endl;
 }
 
 /****************************************/
