@@ -1,11 +1,4 @@
 <?xml version="1.0" ?>
-
-<!-- *************************************************** -->
-<!-- * A fully commented XML is diffusion_1.xml. Refer * -->
-<!-- * to it to have full information about what       * -->
-<!-- * these options mean.                             * -->
-<!-- *************************************************** -->
-
 <argos-configuration>
 
   <!-- ************************* -->
@@ -13,72 +6,38 @@
   <!-- ************************* -->
   <framework>
     <system threads="0" />
-    <experiment length="0"
-                ticks_per_second="10"
-                random_seed="123" />
-  </framework>
+    <experiment length="0" ticks_per_second="10" random_seed="0" />
 
+    <profiling file="profile_visual3D.txt"
+               format="human_readable"
+               truncate_file="true" />
+
+  </framework>
+  
   <!-- *************** -->
   <!-- * Controllers * -->
   <!-- *************** -->
   <controllers>
-
-    <wms_controller id="ffc"
-                                 library="build/wms/wms_controller/libwms_controller">
+    <test_controller library="build/wms/wms_pipuck/libwms_pipuck_controller"
+                     id="test_controller">
       <actuators>
-        <differential_steering implementation="default" />
-        <leds implementation="default" medium="leds" />
-        <range_and_bearing implementation="default" />
+        <pipuck_differential_drive implementation="default" />
       </actuators>
-      <sensors>
-        <footbot_proximity implementation="default" show_rays="false" />
-        <footbot_light implementation="rot_z_only" show_rays="false" />
-        <footbot_motor_ground implementation="rot_z_only" />
-        <range_and_bearing implementation="medium" medium="rab" />
-      </sensors>
-      <params>
-        <diffusion go_straight_angle_range="-5:5"
-                   delta="0.1" />
-        <wheel_turning hard_turn_angle_threshold="90"
-                       soft_turn_angle_threshold="70"
-                       no_turn_angle_threshold="10"
-                       max_speed="10" />
-        <state initial_rest_to_explore_prob="0.1"
-               initial_explore_to_rest_prob="0.1"
-               food_rule_explore_to_rest_delta_prob="0.01"
-               food_rule_rest_to_explore_delta_prob="0.01"
-               collision_rule_explore_to_rest_delta_prob="0.01"
-               social_rule_explore_to_rest_delta_prob="0.01"
-               social_rule_rest_to_explore_delta_prob="0.01"
-               minimum_resting_time="50"
-               minimum_unsuccessful_explore_time="600"
-               minimum_search_for_place_in_nest_time="50">
-          <food_rule active="true" food_rule_explore_to_rest_delta_prob="0.01" />
-        </state>
-      </params>
-    </wms_controller>
-
+      <sensors />
+      <params />
+    </test_controller>
   </controllers>
 
   <!-- ****************** -->
   <!-- * Loop functions * -->
   <!-- ****************** -->
-  <loop_functions library="build/wms/wms_loop_functions/libwms_loop_functions"
-                  label="wms_loop_functions">
-    <foraging items="15"
-              radius="0.1"
-              energy_per_item="1000"
-              energy_per_walking_robot="1"
-              output="wms.txt" />
-
-    <workspace center=" 1,1" />
-
-  </loop_functions>
+  <loop_functions library="build/wms/wms_pipuck/libwms_pipuck_loop_functions"
+                  label="test_loop_functions" />
 
   <!-- *********************** -->
   <!-- * Arena configuration * -->
   <!-- *********************** -->
-  <arena size="20, 15, 2" center="0,0,1">
+  <arena size="20, 15, 1" center="0,0,1">
 
     <floor id="floor"
            source="loop_functions"
@@ -202,32 +161,22 @@
       <body position="-9,-1.25,0" orientation="0,0,0" />
     </box>
 
-    <distribute>
-      <position method="uniform" min="4,-6.5,0" max="9,6.5,0" />
-      <orientation method="uniform" min="0,0,0" max="360,0,0" />
-      <entity quantity="300" max_trials="100">
-        <foot-bot id="fb">
-          <controller config="ffc" />
-        </foot-bot>
-      </entity>
-    </distribute>
-
   </arena>
 
-  <!-- ******************* -->
-  <!-- * Physics engines * -->
-  <!-- ******************* -->
-  <physics_engines>
-    <dynamics2d id="dyn2d" />
-  </physics_engines>
+    <!-- ******************* -->
+    <!-- * Physics engines * -->
+    <!-- ******************* -->
+    <physics_engines>
+      <dynamics3d id="dyn3d" iterations="20">
+        <gravity g="9.8"/>
+        <floor height="0.01" friction="0.05" />
+      </dynamics3d>
+    </physics_engines>
 
   <!-- ********* -->
   <!-- * Media * -->
   <!-- ********* -->
-  <media>
-    <range_and_bearing id="rab" />
-    <led id="leds" />
-  </media>
+  <media />
 
   <!-- ****************** -->
   <!-- * Visualization * -->
@@ -236,11 +185,11 @@
     <qt-opengl>
       <camera>
         <placements>
-          <placement index="0" position="0,0,4.34" look_at="0,0,0" up="0,1,0" lens_focal_length="20" />
+          <placement index="0" position="0,0,50" look_at="0,0,0" up="0,1,0" lens_focal_length="65" />
         </placements>
       </camera>
-      <user_functions label="wms_qt_user_functions" />
     </qt-opengl>
+
   </visualization>
 
 </argos-configuration>

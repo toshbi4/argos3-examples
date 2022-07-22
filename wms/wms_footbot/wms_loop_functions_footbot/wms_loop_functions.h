@@ -5,6 +5,8 @@
 #include <argos3/core/simulator/entity/floor_entity.h>
 #include <argos3/core/utility/math/range.h>
 #include <argos3/core/utility/math/rng.h>
+/* 2D vector definition */
+#include <argos3/core/utility/math/vector2.h>
 
 using namespace argos;
 
@@ -33,9 +35,8 @@ private:
    std::ofstream m_cOutput;
 
    UInt32 m_unCollectedFood;
-   SInt64 m_nEnergy;
-   UInt32 m_unEnergyPerFoodItem;
-   UInt32 m_unEnergyPerWalkingRobot;
+
+   CVector2 goals[2];
 };
 
 #endif

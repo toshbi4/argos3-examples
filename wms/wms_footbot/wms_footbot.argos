@@ -1,0 +1,248 @@
+<?xml version="1.0" ?>
+
+<!-- *************************************************** -->
+<!-- * A fully commented XML is diffusion_1.xml. Refer * -->
+<!-- * to it to have full information about what       * -->
+<!-- * these options mean.                             * -->
+<!-- *************************************************** -->
+
+<argos-configuration>
+
+  <!-- ************************* -->
+  <!-- * General configuration * -->
+  <!-- ************************* -->
+  <framework>
+    <system threads="0" />
+    <experiment length="0"
+                ticks_per_second="10"
+                random_seed="123" />
+  </framework>
+
+  <!-- *************** -->
+  <!-- * Controllers * -->
+  <!-- *************** -->
+  <controllers>
+
+    <wms_controller id="ffc"
+                                 library="build/wms/wms_footbot/wms_controller_footbot/libwms_controller">
+      <actuators>
+        <differential_steering implementation="default" />
+        <leds implementation="default" medium="leds" />
+        <range_and_bearing implementation="default" />
+      </actuators>
+      <sensors>
+        <footbot_proximity implementation="default" show_rays="false" />
+        <footbot_light implementation="rot_z_only" show_rays="false" />
+        <footbot_motor_ground implementation="rot_z_only" />
+        <range_and_bearing implementation="medium" medium="rab" />
+      </sensors>
+      <params>
+        <diffusion go_straight_angle_range="-5:5"
+                   delta="0.1" />
+        <wheel_turning hard_turn_angle_threshold="90"
+                       soft_turn_angle_threshold="70"
+                       no_turn_angle_threshold="10"
+                       max_speed="10" />
+        <state initial_rest_to_explore_prob="0.1"
+               initial_explore_to_rest_prob="0.1"
+               food_rule_explore_to_rest_delta_prob="0.01"
+               food_rule_rest_to_explore_delta_prob="0.01"
+               collision_rule_explore_to_rest_delta_prob="0.01"
+               social_rule_explore_to_rest_delta_prob="0.01"
+               social_rule_rest_to_explore_delta_prob="0.01"
+               minimum_resting_time="50"
+               minimum_unsuccessful_explore_time="600"
+               minimum_search_for_place_in_nest_time="50">
+          <food_rule active="true" food_rule_explore_to_rest_delta_prob="0.01" />
+        </state>
+      </params>
+    </wms_controller>
+
+  </controllers>
+
+  <!-- ****************** -->
+  <!-- * Loop functions * -->
+  <!-- ****************** -->
+  <loop_functions library="build/wms/wms_footbot/wms_loop_functions_footbot/libwms_loop_functions"
+                  label="wms_loop_functions">
+    <wms items="1"
+         radius="0.1"
+         energy_per_item="1000"
+         energy_per_walking_robot="1"
+         output="wms.txt" />
+
+    <workspace center=" 1,1" />
+
+  </loop_functions>
+
+  <!-- *********************** -->
+  <!-- * Arena configuration * -->
+  <!-- *********************** -->
+  <arena size="20, 15, 2" center="0,0,1">
+
+    <floor id="floor"
+           source="loop_functions"
+           pixels_per_meter="50" />
+
+    <box id="wall_north1" size="5,0.1,0.1" movable="false">
+      <body position="6.5,6.5,0" orientation="0,0,0" />
+    </box>
+    <box id="wall_north2" size="13,0.1,0.1" movable="false">
+      <body position="-2.5,6,0" orientation="0,0,0" />
+    </box>
+    <box id="wall_north3" size="13,0.1,0.1" movable="false">
+      <body position="-2.5,4.5,0" orientation="0,0,0" />
+    </box>
+    <box id="wall_north4" size="13,0.1,0.1" movable="false">
+      <body position="-2.5,3,0" orientation="0,0,0" />
+    </box>
+    <box id="wall_north5" size="13,0.1,0.1" movable="false">
+      <body position="-2.5,1.5,0" orientation="0,0,0" />
+    </box>
+    <box id="wall_north6" size="13,0.1,0.1" movable="false">
+      <body position="-2.5,-1,0" orientation="0,0,0" />
+    </box>
+    <box id="wall_nort7" size="13,0.1,0.1" movable="false">
+      <body position="-2.5,-2.5,0" orientation="0,0,0" />
+    </box>
+    <box id="wall_north8" size="13,0.1,0.1" movable="false">
+      <body position="-2.5,-4,0" orientation="0,0,0" />
+    </box>
+    <box id="wall_north9" size="13,0.1,0.1" movable="false">
+      <body position="-2.5,-5.5,0" orientation="0,0,0" />
+    </box>
+
+
+    <box id="wall_south1" size="5,0.1,0.1" movable="false">
+      <body position="6.5,-6.5,0" orientation="0,0,0" />
+    </box>
+    <box id="wall_south2" size="13,0.1,0.1" movable="false">
+      <body position="-2.5,5.5,0" orientation="0,0,0" />
+    </box>
+    <box id="wall_south3" size="13,0.1,0.1" movable="false">
+      <body position="-2.5,4,0" orientation="0,0,0" />
+    </box>
+    <box id="wall_south4" size="13,0.1,0.1" movable="false">
+      <body position="-2.5,2.5,0" orientation="0,0,0" />
+    </box>
+    <box id="wall_south5" size="13,0.1,0.1" movable="false">
+      <body position="-2.5,1,0" orientation="0,0,0" />
+    </box>
+    <box id="wall_south6" size="13,0.1,0.1" movable="false">
+      <body position="-2.5,-1.5,0" orientation="0,0,0" />
+    </box>
+    <box id="wall_south7" size="13,0.1,0.1" movable="false">
+      <body position="-2.5,-3,0" orientation="0,0,0" />
+    </box>
+    <box id="wall_south8" size="13,0.1,0.1" movable="false">
+      <body position="-2.5,-4.5,0" orientation="0,0,0" />
+    </box>
+    <box id="wall_south9" size="13,0.1,0.1" movable="false">
+      <body position="-2.5,-6,0" orientation="0,0,0" />
+    </box>
+
+
+    <box id="wall_east" size="0.1,13,0.1" movable="false">
+      <body position="9,0,0" orientation="0,0,0" />
+    </box>
+
+
+    <box id="wall_west1" size="0.1,0.5,0.1" movable="false">
+      <body position="4,6.25,0" orientation="0,0,0" />
+    </box>
+    <box id="wall_west2" size="0.1,1,0.1" movable="false">
+      <body position="4,5,0" orientation="0,0,0" />
+    </box>
+    <box id="wall_west3" size="0.1,1,0.1" movable="false">
+      <body position="4,3.5,0" orientation="0,0,0" />
+    </box>
+    <box id="wall_west4" size="0.1,1,0.1" movable="false">
+      <body position="4,2,0" orientation="0,0,0" />
+    </box>
+    <box id="wall_west5" size="0.1,1,0.1" movable="false">
+      <body position="4,0.5,0" orientation="0,0,0" />
+    </box>
+    <box id="wall_west6" size="0.1,1,0.1" movable="false">
+      <body position="4,-0.5,0" orientation="0,0,0" />
+    </box>
+    <box id="wall_west7" size="0.1,1,0.1" movable="false">
+      <body position="4,-2,0" orientation="0,0,0" />
+    </box>
+    <box id="wall_west8" size="0.1,1,0.1" movable="false">
+      <body position="4,-3.5,0" orientation="0,0,0" />
+    </box>
+    <box id="wall_west9" size="0.1,1,0.1" movable="false">
+      <body position="4,-5,0" orientation="0,0,0" />
+    </box>
+    <box id="wall_west10" size="0.1,0.5,0.1" movable="false">
+      <body position="4,-6.25,0" orientation="0,0,0" />
+    </box>
+    <box id="wall_west11" size="0.1,0.5,0.1" movable="false">
+      <body position="-9,5.75,0" orientation="0,0,0" />
+    </box>
+    <box id="wall_west12" size="0.1,0.5,0.1" movable="false">
+      <body position="-9,4.25,0" orientation="0,0,0" />
+    </box>
+    <box id="wall_west13" size="0.1,0.5,0.1" movable="false">
+      <body position="-9,2.75,0" orientation="0,0,0" />
+    </box>
+    <box id="wall_west14" size="0.1,0.5,0.1" movable="false">
+      <body position="-9,1.25,0" orientation="0,0,0" />
+    </box>
+    <box id="wall_west15" size="0.1,0.5,0.1" movable="false">
+      <body position="-9,-5.75,0" orientation="0,0,0" />
+    </box>
+    <box id="wall_west16" size="0.1,0.5,0.1" movable="false">
+      <body position="-9,-4.25,0" orientation="0,0,0" />
+    </box>
+    <box id="wall_west17" size="0.1,0.5,0.1" movable="false">
+      <body position="-9,-2.75,0" orientation="0,0,0" />
+    </box>
+    <box id="wall_west18" size="0.1,0.5,0.1" movable="false">
+      <body position="-9,-1.25,0" orientation="0,0,0" />
+    </box>
+
+    <distribute>
+      <position method="uniform" min="4,-6.5,0" max="9,6.5,0" />
+      <orientation method="uniform" min="0,0,0" max="360,0,0" />
+      <entity quantity="2" max_trials="100">
+        <foot-bot id="fb">
+          <controller config="ffc" />
+        </foot-bot>
+      </entity>
+    </distribute>
+
+  </arena>
+
+  <!-- ******************* -->
+  <!-- * Physics engines * -->
+  <!-- ******************* -->
+  <physics_engines>
+    <dynamics2d id="dyn2d">
+        <differential_steering max_force="0.001" max_torque="0.001"/>
+    </dynamics2d>
+  </physics_engines>
+
+  <!-- ********* -->
+  <!-- * Media * -->
+  <!-- ********* -->
+  <media>
+    <range_and_bearing id="rab" />
+    <led id="leds" />
+  </media>
+
+  <!-- ****************** -->
+  <!-- * Visualization * -->
+  <!-- ****************** -->
+  <visualization>
+    <qt-opengl>
+      <camera>
+        <placements>
+          <placement index="0" position="0,0,4.34" look_at="0,0,0" up="0,1,0" lens_focal_length="20" />
+        </placements>
+      </camera>
+      <user_functions label="wms_qt_user_functions" />
+    </qt-opengl>
+  </visualization>
+
+</argos-configuration>

@@ -1,5 +1,5 @@
 #include "wms_qt_user_functions.h"
-#include <wms/wms_controller/wms_controller.h>
+#include <wms/wms_footbot/wms_controller_footbot/wms_controller.h>
 #include <argos3/core/simulator/entity/controllable_entity.h>
 
 using namespace argos;

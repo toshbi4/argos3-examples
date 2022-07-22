@@ -171,6 +171,7 @@ public:
 
       SStateData();
       void Init(TConfigurationNode& t_node);
+
       void Reset();
    };
 
@@ -187,6 +188,8 @@ public:
     * file in the <controllers><footbot_foraging_controller> section.
     */
    virtual void Init(TConfigurationNode& t_node);
+
+   void setCoordinates(CVector2& cPos, CQuaternion& cOrient, CVector2& cGoalPos);
 
    /*
     * This function is called once every time step.
@@ -239,6 +242,8 @@ public:
 
 private:
 
+   CVector2 speed_test {0, 0};
+
    /*
     * Updates the state information.
     * In pratice, it sets the SStateData::InNest flag.
@@ -266,7 +271,7 @@ private:
     * Gets a direction vector as input and transforms it into wheel
     * actuation.
     */
-   void SetWheelSpeedsFromVector(const CVector2& c_heading);
+   void SetWheelSpeedsFromLocalVector(const CVector2& c_heading);
 
    /*
     * Executes the resting state.

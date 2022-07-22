@@ -150,27 +150,46 @@ void WmsController::Init(TConfigurationNode& t_node) {
    Reset();
 }
 
+void WmsController::setCoordinates(CVector2& cPos, CQuaternion& cOrient, CVector2& cGoalPos){
+
+    // yaw (z-axis rotation)
+    double siny_cosp = 2 * (cOrient.GetW() * cOrient.GetZ() + cOrient.GetX() * cOrient.GetY());
+    double cosy_cosp = 1 - 2 * (cOrient.GetY() * cOrient.GetY() + cOrient.GetZ() * cOrient.GetZ());
+    double yaw = std::atan2(siny_cosp, cosy_cosp);
+    double cos_yaw = cos(yaw); //radians
+    double sin_yaw = sin(yaw); //radians
+
+    double sin_theta = - cos_yaw; // yaw = theta + 90
+    double cos_theta = sin_yaw; // yaw = theta + 90
+
+//    Real rot_values[4]{cos(yaw), sin(yaw), -sin(yaw), cos(yaw)};
+//    CMatrix<2, 2> rot(rot_values);
+    CVector2 goalPos(cGoalPos.GetX() - cPos.GetX(), cGoalPos.GetY() - cPos.GetY());
+
+    CMatrix<2, 1> localVec; //= (static_cast<CMatrix<1, 2>>(goalPos) * rot/* + static_cast<CMatrix<1, 2>>(cPos)*/).GetTransposed();
+
+
+    localVec(0) = goalPos.GetX()*cos_theta + goalPos.GetY()*sin_theta;
+    localVec(1) = -goalPos.GetX()*sin_theta + goalPos.GetY()*cos_theta;
+
+    std::cout << "---" << std::endl;
+    std::cout << "yaw = " << yaw << std::endl;
+    std::cout << "cos(yaw) = " << cos_theta << std::endl;
+    std::cout << "sin(yaw) = " << sin_theta << std::endl;
+    std::cout << "localCoords: " << localVec(0) << " " << localVec(1) << std::endl;
+    std::cout << "GoalPos: " << goalPos.GetX() << " " << goalPos.GetY() << std::endl;
+
+    speed_test.Set(localVec(0), localVec(1));
+};
+
 /****************************************/
 /****************************************/
 
 void WmsController::ControlStep() {
-   switch(m_sStateData.State) {
-      case SStateData::STATE_RESTING: {
-         Rest();
-         break;
-      }
-      case SStateData::STATE_EXPLORING: {
-         Explore();
-         break;
-      }
-      case SStateData::STATE_RETURN_TO_NEST: {
-         ReturnToNest();
-         break;
-      }
-      default: {
-         LOGERR << "We can't be here, there's a bug!" << std::endl;
-      }
-   }
+    CVector2 speed {0, 2.0};
+    ////std::cout << speed_test.GetX() << " " << speed_test.GetY() << std::endl;
+    SetWheelSpeedsFromLocalVector(speed_test);
+    //SetWheelSpeedsFromLocalVector(speed);
 }
 
 /****************************************/
@@ -187,55 +206,6 @@ void WmsController::Reset() {
    m_eLastExplorationResult = LAST_EXPLORATION_NONE;
    m_pcRABA->ClearData();
    m_pcRABA->SetData(0, LAST_EXPLORATION_NONE);
-}
-
-/****************************************/
-/****************************************/
-
-void WmsController::UpdateState() {
-   /* Reset state flags */
-   m_sStateData.InNest = false;
-   /* Read stuff from the ground sensor */
-   const CCI_FootBotMotorGroundSensor::TReadings& tGroundReads = m_pcGround->GetReadings();
-   /*
-    * You can say whether you are in the nest by checking the ground sensor
-    * placed close to the wheel motors. It returns a value between 0 and 1.
-    * It is 1 when the robot is on a white area, it is 0 when the robot
-    * is on a black area and it is around 0.5 when the robot is on a gray
-    * area. 
-    * The foot-bot has 4 sensors like this, two in the front
-    * (corresponding to readings 0 and 1) and two in the back
-    * (corresponding to reading 2 and 3).  Here we want the back sensors
-    * (readings 2 and 3) to tell us whether we are on gray: if so, the
-    * robot is completely in the nest, otherwise it's outside.
-    */
-   if(tGroundReads[2].Value > 0.25f &&
-      tGroundReads[2].Value < 0.75f &&
-      tGroundReads[3].Value > 0.25f &&
-      tGroundReads[3].Value < 0.75f) {
-      m_sStateData.InNest = true;
-   }
-}
-
-/****************************************/
-/****************************************/
-
-CVector2 WmsController::CalculateVectorToLight() {
-   /* Get readings from light sensor */
-   const CCI_FootBotLightSensor::TReadings& tLightReads = m_pcLight->GetReadings();
-   /* Sum them together */
-   CVector2 cAccumulator;
-   for(size_t i = 0; i < tLightReads.size(); ++i) {
-      cAccumulator += CVector2(tLightReads[i].Value, tLightReads[i].Angle);
-   }
-   /* If the light was perceived, return the vector */
-   if(cAccumulator.Length() > 0.0f) {
-      return CVector2(1.0f, cAccumulator.Angle());
-   }
-   /* Otherwise, return zero */
-   else {
-      return CVector2();
-   }
 }
 
 /****************************************/
@@ -267,13 +237,16 @@ CVector2 WmsController::DiffusionVector(bool& b_collision) {
 /****************************************/
 /****************************************/
 
-void WmsController::SetWheelSpeedsFromVector(const CVector2& c_heading) {
+void WmsController::SetWheelSpeedsFromLocalVector(const CVector2& c_heading) {
    /* Get the heading angle */
-   CRadians cHeadingAngle = c_heading.Angle().SignedNormalize();
+   CRadians cHeadingAngle = c_heading.Angle().SignedNormalize() - CRadians::PI_OVER_TWO;
    /* Get the length of the heading vector */
    Real fHeadingLength = c_heading.Length();
    /* Clamp the speed so that it's not greater than MaxSpeed */
    Real fBaseAngularWheelSpeed = Min<Real>(fHeadingLength, m_sWheelTurningParams.MaxSpeed);
+
+   std::cout << cHeadingAngle << std::endl;
+
    /* State transition logic */
    if(m_sWheelTurningParams.TurningMechanism == SWheelTurningParams::HARD_TURN) {
       if(Abs(cHeadingAngle) <= m_sWheelTurningParams.SoftTurnOnAngleThreshold) {
@@ -319,6 +292,10 @@ void WmsController::SetWheelSpeedsFromVector(const CVector2& c_heading) {
          break;
       }
    }
+
+   // std::cout << "Angle: " << cHeadingAngle << std::endl;
+   //std::cout << fSpeed1 << " " << fSpeed2 << std::endl;
+
    /* Apply the calculated speeds to the appropriate wheels */
    Real fLeftWheelSpeed, fRightWheelSpeed;
    if(cHeadingAngle > CRadians::ZERO) {
@@ -333,178 +310,6 @@ void WmsController::SetWheelSpeedsFromVector(const CVector2& c_heading) {
    }
    /* Finally, set the wheel speeds */
    m_pcWheels->SetLinearVelocity(fLeftWheelSpeed, fRightWheelSpeed);
-}
-
-/****************************************/
-/****************************************/
-
-void WmsController::Rest() {
-   /* If we have stayed here enough, probabilistically switch to
-    * 'exploring' */
-   if(m_sStateData.TimeRested > m_sStateData.MinimumRestingTime &&
-      m_pcRNG->Uniform(m_sStateData.ProbRange) < m_sStateData.RestToExploreProb) {
-      m_pcLEDs->SetAllColors(CColor::GREEN);
-      m_sStateData.State = SStateData::STATE_EXPLORING;
-      m_sStateData.TimeRested = 0;
-   }
-   else {
-      ++m_sStateData.TimeRested;
-      /* Be sure not to send the last exploration result multiple times */
-      if(m_sStateData.TimeRested == 1) {
-         m_pcRABA->SetData(0, LAST_EXPLORATION_NONE);
-      }
-      /*
-       * Social rule: listen to what other people have found and modify
-       * probabilities accordingly
-       */
-      const CCI_RangeAndBearingSensor::TReadings& tPackets = m_pcRABS->GetReadings();
-      for(size_t i = 0; i < tPackets.size(); ++i) {
-         switch(tPackets[i].Data[0]) {
-            case LAST_EXPLORATION_SUCCESSFUL: {
-               m_sStateData.RestToExploreProb += m_sStateData.SocialRuleRestToExploreDeltaProb;
-               m_sStateData.ProbRange.TruncValue(m_sStateData.RestToExploreProb);
-               m_sStateData.ExploreToRestProb -= m_sStateData.SocialRuleExploreToRestDeltaProb;
-               m_sStateData.ProbRange.TruncValue(m_sStateData.ExploreToRestProb);
-               break;
-            }
-            case LAST_EXPLORATION_UNSUCCESSFUL: {
-               m_sStateData.ExploreToRestProb += m_sStateData.SocialRuleExploreToRestDeltaProb;
-               m_sStateData.ProbRange.TruncValue(m_sStateData.ExploreToRestProb);
-               m_sStateData.RestToExploreProb -= m_sStateData.SocialRuleRestToExploreDeltaProb;
-               m_sStateData.ProbRange.TruncValue(m_sStateData.RestToExploreProb);
-               break;
-            }
-         }
-      }
-   }
-}
-
-/****************************************/
-/****************************************/
-
-void WmsController::Explore() {
-   /* We switch to 'return to nest' in two situations:
-    * 1. if we have a food item
-    * 2. if we have not found a food item for some time;
-    *    in this case, the switch is probabilistic
-    */
-   bool bReturnToNest(false);
-   /*
-    * Test the first condition: have we found a food item?
-    * NOTE: the food data is updated by the loop functions, so
-    * here we just need to read it
-    */
-   if(m_sFoodData.HasFoodItem) {
-      /* Apply the food rule, decreasing ExploreToRestProb and increasing
-       * RestToExploreProb */
-      m_sStateData.ExploreToRestProb -= m_sStateData.FoodRuleExploreToRestDeltaProb;
-      m_sStateData.ProbRange.TruncValue(m_sStateData.ExploreToRestProb);
-      m_sStateData.RestToExploreProb += m_sStateData.FoodRuleRestToExploreDeltaProb;
-      m_sStateData.ProbRange.TruncValue(m_sStateData.RestToExploreProb);
-      /* Store the result of the expedition */
-      m_eLastExplorationResult = LAST_EXPLORATION_SUCCESSFUL;
-      /* Switch to 'return to nest' */
-      bReturnToNest = true;
-   }
-   /* Test the second condition: we probabilistically switch to 'return to
-    * nest' if we have been wandering for some time and found nothing */
-   else if(m_sStateData.TimeExploringUnsuccessfully > m_sStateData.MinimumUnsuccessfulExploreTime) {
-      if (m_pcRNG->Uniform(m_sStateData.ProbRange) < m_sStateData.ExploreToRestProb) {
-         /* Store the result of the expedition */
-         m_eLastExplorationResult = LAST_EXPLORATION_UNSUCCESSFUL;
-         /* Switch to 'return to nest' */
-         bReturnToNest = true;
-      }
-      else {
-         /* Apply the food rule, increasing ExploreToRestProb and
-          * decreasing RestToExploreProb */
-         m_sStateData.ExploreToRestProb += m_sStateData.FoodRuleExploreToRestDeltaProb;
-         m_sStateData.ProbRange.TruncValue(m_sStateData.ExploreToRestProb);
-         m_sStateData.RestToExploreProb -= m_sStateData.FoodRuleRestToExploreDeltaProb;
-         m_sStateData.ProbRange.TruncValue(m_sStateData.RestToExploreProb);
-      }
-   }
-   /* So, do we return to the nest now? */
-   if(bReturnToNest) {
-      /* Yes, we do! */
-      m_sStateData.TimeExploringUnsuccessfully = 0;
-      m_sStateData.TimeSearchingForPlaceInNest = 0;
-      m_pcLEDs->SetAllColors(CColor::BLUE);
-      m_sStateData.State = SStateData::STATE_RETURN_TO_NEST;
-   }
-   else {
-      /* No, perform the actual exploration */
-      ++m_sStateData.TimeExploringUnsuccessfully;
-      UpdateState();
-      /* Get the diffusion vector to perform obstacle avoidance */
-      bool bCollision;
-      CVector2 cDiffusion = DiffusionVector(bCollision);
-      /* Apply the collision rule, if a collision avoidance happened */
-      if(bCollision) {
-         /* Collision avoidance happened, increase ExploreToRestProb and
-          * decrease RestToExploreProb */
-         m_sStateData.ExploreToRestProb += m_sStateData.CollisionRuleExploreToRestDeltaProb;
-         m_sStateData.ProbRange.TruncValue(m_sStateData.ExploreToRestProb);
-         m_sStateData.RestToExploreProb -= m_sStateData.CollisionRuleExploreToRestDeltaProb;
-         m_sStateData.ProbRange.TruncValue(m_sStateData.RestToExploreProb);
-      }
-      /*
-       * If we are in the nest, we combine antiphototaxis with obstacle
-       * avoidance
-       * Outside the nest, we just use the diffusion vector
-       */
-      if(m_sStateData.InNest) {
-         /*
-          * The vector returned by CalculateVectorToLight() points to
-          * the light. Thus, the minus sign is because we want to go away
-          * from the light.
-          */
-         SetWheelSpeedsFromVector(
-            m_sWheelTurningParams.MaxSpeed * cDiffusion -
-            m_sWheelTurningParams.MaxSpeed * 0.25f * CalculateVectorToLight());
-      }
-      else {
-         /* Use the diffusion vector only */
-         SetWheelSpeedsFromVector(m_sWheelTurningParams.MaxSpeed * cDiffusion);
-      }
-   }
-}
-
-/****************************************/
-/****************************************/
-
-void WmsController::ReturnToNest() {
-   /* As soon as you get to the nest, switch to 'resting' */
-   UpdateState();
-   /* Are we in the nest? */
-   if(m_sStateData.InNest) {
-      /* Have we looked for a place long enough? */
-      if(m_sStateData.TimeSearchingForPlaceInNest > m_sStateData.MinimumSearchForPlaceInNestTime) {
-         /* Yes, stop the wheels... */
-         m_pcWheels->SetLinearVelocity(0.0f, 0.0f);
-         /* Tell people about the last exploration attempt */
-         m_pcRABA->SetData(0, m_eLastExplorationResult);
-         /* ... and switch to state 'resting' */
-         m_pcLEDs->SetAllColors(CColor::RED);
-         m_sStateData.State = SStateData::STATE_RESTING;
-         m_sStateData.TimeSearchingForPlaceInNest = 0;
-         m_eLastExplorationResult = LAST_EXPLORATION_NONE;
-         return;
-      }
-      else {
-         /* No, keep looking */
-         ++m_sStateData.TimeSearchingForPlaceInNest;
-      }
-   }
-   else {
-      /* Still outside the nest */
-      m_sStateData.TimeSearchingForPlaceInNest = 0;
-   }
-   /* Keep going */
-   bool bCollision;
-   SetWheelSpeedsFromVector(
-      m_sWheelTurningParams.MaxSpeed * DiffusionVector(bCollision) +
-      m_sWheelTurningParams.MaxSpeed * CalculateVectorToLight());
 }
 
 /****************************************/
