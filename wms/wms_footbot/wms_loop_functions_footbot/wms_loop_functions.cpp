@@ -8,12 +8,11 @@
 /****************************************/
 
 WmsLoopFunctions::WmsLoopFunctions() :
-   m_cForagingArenaSideX(-0.9f, 1.7f),
-   m_cForagingArenaSideY(-1.7f, 1.7f),
+   m_cForagingArenaSideX(-10.0f, 10.0f),
+   m_cForagingArenaSideY(-7.5f, 7.5f),
    m_pcFloor(NULL),
    m_pcRNG(NULL),
-   m_unCollectedFood(0),
-   goals{CVector2(7, -5), CVector2(5, 0)}
+   m_unCollectedFood(0)
 {
 }
 
@@ -21,7 +20,9 @@ WmsLoopFunctions::WmsLoopFunctions() :
 /****************************************/
 
 void WmsLoopFunctions::Init(TConfigurationNode& t_node) {
-   try {
+
+    try {
+
       TConfigurationNode& tWms = GetNode(t_node, "wms");
       /* Get a pointer to the floor entity */
       m_pcFloor = &GetSpace().GetFloorEntity();
@@ -33,9 +34,16 @@ void WmsLoopFunctions::Init(TConfigurationNode& t_node) {
       m_fFoodSquareRadius *= m_fFoodSquareRadius;
       /* Create a new RNG */
       m_pcRNG = CRandom::CreateRNG("argos");
+
+
+      CSpace::TMapPerType& m_cFootbots = GetSpace().GetEntitiesByType("foot-bot");
+      std::cout << m_cFootbots.size() << std::endl;
+      uint16_t robots_num = m_cFootbots.size();
+
       /* Distribute uniformly the items in the environment */
-      for(UInt32 i = 0; i < sizeof(goals)/sizeof(goals[0]); ++i) {
-         m_cFoodPos.push_back(goals[i]);
+      for(UInt32 i = 0; i < robots_num; ++i) {
+         m_cGoalsPos.push_back(CVector2(m_pcRNG->Uniform(m_cForagingArenaSideX),
+                               m_pcRNG->Uniform(m_cForagingArenaSideY)));
       }
       /* Get the output file name from XML */
       GetNodeAttribute(tWms, "output", m_strOutput);
@@ -77,9 +85,9 @@ void WmsLoopFunctions::Reset() {
    m_cOutput.open(m_strOutput.c_str(), std::ios_base::trunc | std::ios_base::out);
    m_cOutput << "# clock\twalking\tresting\tcollected_food\tenergy" << std::endl;
    /* Distribute uniformly the items in the environment */
-   for(UInt32 i = 0; i < m_cFoodPos.size(); ++i) {
-      m_cFoodPos[i] = goals[i];
-   }
+//   for(UInt32 i = 0; i < m_cGoalsPos.size(); ++i) {
+//      m_cGoalsPos[i] = goals[i];
+//   }
 }
 
 /****************************************/
@@ -94,11 +102,11 @@ void WmsLoopFunctions::Destroy() {
 /****************************************/
 
 CColor WmsLoopFunctions::GetFloorColor(const CVector2& c_position_on_plane) {
-   if(c_position_on_plane.GetX() > 8.0f) {
-      return CColor::GRAY50;
-   }
-   for(UInt32 i = 0; i < m_cFoodPos.size(); ++i) {
-      if((c_position_on_plane - m_cFoodPos[i]).SquareLength() < m_fFoodSquareRadius) {
+//   if(c_position_on_plane.GetX() > 8.0f) {
+//      return CColor::GRAY50;
+//   }
+   for(UInt32 i = 0; i < m_cGoalsPos.size(); ++i) {
+      if((c_position_on_plane - m_cGoalsPos[i]).SquareLength() < m_fFoodSquareRadius) {
          return CColor::BLACK;
       }
    }
@@ -141,7 +149,7 @@ void WmsLoopFunctions::PreStep() {
 
 
 
-      cController.setCoordinates(cPos, cOrient, goals[robot_id]);
+      cController.setCoordinates(cPos, cOrient, m_cGoalsPos[robot_id]);
 
       /* Get food data */
       WmsController::SFoodData& sFoodData = cController.GetFoodData();
@@ -150,7 +158,7 @@ void WmsLoopFunctions::PreStep() {
          /* Check whether the foot-bot is in the nest */
          if(cPos.GetX() > 8.0f) {
             /* Place a new food item on the ground */
-            m_cFoodPos[sFoodData.FoodItemIdx].Set(/*m_pcRNG->Uniform(m_cForagingArenaSideX)*/5.0,
+            m_cGoalsPos[sFoodData.FoodItemIdx].Set(/*m_pcRNG->Uniform(m_cForagingArenaSideX)*/5.0,
                                                   /*m_pcRNG->Uniform(m_cForagingArenaSideY)*/0.0);
             /* Drop the food item */
             sFoodData.HasFoodItem = false;
@@ -168,10 +176,10 @@ void WmsLoopFunctions::PreStep() {
          if(cPos.GetX() < 8.0f) {
             /* Check whether the foot-bot is on a food item */
             bool bDone = false;
-            for(size_t i = 0; i < m_cFoodPos.size() && !bDone; ++i) {
-               if((cPos - m_cFoodPos[i]).SquareLength() < m_fFoodSquareRadius) {
+            for(size_t i = 0; i < m_cGoalsPos.size() && !bDone; ++i) {
+               if((cPos - m_cGoalsPos[i]).SquareLength() < m_fFoodSquareRadius) {
                   /* If so, we move that item out of sight */
-                  m_cFoodPos[i].Set(100.0f, 100.f);
+                  m_cGoalsPos[i].Set(100.0f, 100.f);
                   /* The foot-bot is now carrying an item */
                   sFoodData.HasFoodItem = true;
                   sFoodData.FoodItemIdx = i;

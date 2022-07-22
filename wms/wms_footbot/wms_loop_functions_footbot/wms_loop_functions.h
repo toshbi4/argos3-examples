@@ -27,7 +27,7 @@ private:
 
    Real m_fFoodSquareRadius;
    CRange<Real> m_cForagingArenaSideX, m_cForagingArenaSideY;
-   std::vector<CVector2> m_cFoodPos;
+   std::vector<CVector2> m_cGoalsPos;
    CFloorEntity* m_pcFloor;
    CRandom::CRNG* m_pcRNG;
 
@@ -35,8 +35,6 @@ private:
    std::ofstream m_cOutput;
 
    UInt32 m_unCollectedFood;
-
-   CVector2 goals[2];
 };
 
 #endif
