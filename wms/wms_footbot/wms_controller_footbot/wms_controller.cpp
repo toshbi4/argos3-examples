@@ -152,11 +152,6 @@ void WmsController::Init(TConfigurationNode& t_node) {
 
 void WmsController::setCoordinates(CVector2& cPos, CQuaternion& cOrient, CVector2& cGoalPos){
 
-    if (m_sFoodData.HasFoodItem){
-
-        speed_test.Set(0.0f, 0.0f);
-
-    } else {
 
         // yaw (z-axis rotation)
         double siny_cosp = 2 * (cOrient.GetW() * cOrient.GetZ() + cOrient.GetX() * cOrient.GetY());
@@ -187,7 +182,6 @@ void WmsController::setCoordinates(CVector2& cPos, CQuaternion& cOrient, CVector
 
         speed_test.Set(localVec(0), localVec(1));
 
-    }
 };
 
 /****************************************/
@@ -195,54 +189,24 @@ void WmsController::setCoordinates(CVector2& cPos, CQuaternion& cOrient, CVector
 
 void WmsController::ControlStep() {
     CVector2 speed {0, 2.0};
-    //std::cout << speed_test.GetX() << " " << speed_test.GetY() << std::endl;
-
-    /* Get readings from proximity sensor */
-//    const CCI_FootBotProximitySensor::TReadings& tProxReads = m_pcProximity->GetReadings();
-
-//    /* Get the highest reading in front of the robot, which corresponds to the closest object */
-//    Real fMaxReadVal = tProxReads[0].Value;
-//    UInt32 unMaxReadIdx = 0;
-//    if(fMaxReadVal < tProxReads[1].Value) {
-//       fMaxReadVal = tProxReads[1].Value;
-//       unMaxReadIdx = 1;
-//    }
-//    if(fMaxReadVal < tProxReads[7].Value) {
-//       fMaxReadVal = tProxReads[7].Value;
-//       unMaxReadIdx = 7;
-//    }
-//    if(fMaxReadVal < tProxReads[6].Value) {
-//       fMaxReadVal = tProxReads[6].Value;
-//       unMaxReadIdx = 6;
-//    }
-//    /* Do we have an obstacle in front? */
-//    if((fMaxReadVal > 0.0f) && (!m_sFoodData.HasFoodItem)) {
-//      /* Yes, we do: avoid it */
-//      if(unMaxReadIdx == 0 || unMaxReadIdx == 1) {
-//        /* The obstacle is on the left, turn right */
-//        m_pcWheels->SetLinearVelocity(5.5f, 1.0f);
-//      }
-//      else {
-//        /* The obstacle is on the left, turn right */
-//        m_pcWheels->SetLinearVelocity(1.0f, 5.5f);
-//      }
-//    }
-//    else {
-//      /* No, we don't: go straight */
-//       SetWheelSpeedsFromLocalVector(speed_test);
-//    }
 
     bool bCollision = false;
     CVector2 cDiffusion = DiffusionVector(bCollision);
 
-    if ((bCollision) && (!m_sFoodData.HasFoodItem)) {
-
-    SetWheelSpeedsFromLocalVector(m_sWheelTurningParams.MaxSpeed * DiffusionVector(bCollision) +
-                                  m_sWheelTurningParams.MaxSpeed * 0.5 * speed_test);
+    if (m_sFoodData.HasFoodItem){
+        if (bCollision) {
+            SetWheelSpeedsFromLocalVector(CVector2(1.0f, 5.0f));
+        } else {
+            SetWheelSpeedsFromLocalVector(CVector2(0.0f, 0.0f));
+        }
     } else {
-        SetWheelSpeedsFromLocalVector(m_sWheelTurningParams.MaxSpeed * speed_test);
+        if (bCollision) {
+            SetWheelSpeedsFromLocalVector(m_sWheelTurningParams.MaxSpeed * 1.0 * DiffusionVector(bCollision) +
+                                          m_sWheelTurningParams.MaxSpeed * 0.2 * speed_test);
+        } else {
+            SetWheelSpeedsFromLocalVector(m_sWheelTurningParams.MaxSpeed * speed_test);
+        }
     }
-    //SetWheelSpeedsFromLocalVector(speed);
 }
 
 /****************************************/
