@@ -7,12 +7,15 @@
 #include <argos3/core/utility/math/rng.h>
 /* 2D vector definition */
 #include <argos3/core/utility/math/vector2.h>
+#include <chrono>
 
 using namespace argos;
 
 class WmsLoopFunctions : public CLoopFunctions {
 
 public:
+
+   using mcs = std::chrono::microseconds;
 
    WmsLoopFunctions();
    virtual ~WmsLoopFunctions() {}
@@ -25,6 +28,14 @@ public:
 
 private:
 
+   // Get time stamp in microseconds.
+   std::chrono::microseconds micros()
+   {
+       std::chrono::microseconds us = std::chrono::duration_cast<std::chrono::microseconds>(
+               std::chrono::high_resolution_clock::now().time_since_epoch());
+       return us;
+   }
+
    Real m_fFoodSquareRadius;
    CRange<Real> m_cForagingArenaSideX, m_cForagingArenaSideY;
    std::vector<CVector2> m_cGoalsPos;
@@ -35,6 +46,7 @@ private:
    std::ofstream m_cOutput;
 
    UInt32 m_unCollectedFood;
+   std::chrono::microseconds start;
 };
 
 #endif

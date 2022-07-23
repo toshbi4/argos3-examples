@@ -25,7 +25,7 @@ void WmsController::SFoodData::Reset() {
 /****************************************/
 
 WmsController::SDiffusionParams::SDiffusionParams() :
-   GoStraightAngleRange(CRadians(-1.0f), CRadians(1.0f)) {}
+   GoStraightAngleRange(CRadians(-0.05f), CRadians(0.05f)) {}
 
 void WmsController::SDiffusionParams::Init(TConfigurationNode& t_node) {
    try {
@@ -152,6 +152,10 @@ void WmsController::Init(TConfigurationNode& t_node) {
 
 void WmsController::setCoordinates(CVector2& cPos, CQuaternion& cOrient, CVector2& cGoalPos){
 
+    if (m_sFoodData.HasFoodItem){
+        cGoalPos.Set(20.0f, 20.0f);
+    }
+
 
         // yaw (z-axis rotation)
         double siny_cosp = 2 * (cOrient.GetW() * cOrient.GetZ() + cOrient.GetX() * cOrient.GetY());
@@ -197,7 +201,17 @@ void WmsController::ControlStep() {
         if (bCollision) {
             SetWheelSpeedsFromLocalVector(CVector2(1.0f, 5.0f));
         } else {
-            SetWheelSpeedsFromLocalVector(CVector2(0.0f, 0.0f));
+//            const CCI_FootBotProximitySensor::TReadings& tProxReads = m_pcProximity->GetReadings();
+//            uint8_t summ_val = 0;
+//            for(size_t i = 0; i < tProxReads.size(); ++i) {
+//               summ_val += tProxReads[i].Value;
+//            }
+//            std::cout << summ_val << std::endl;
+//            if (summ_val > 0){
+//                SetWheelSpeedsFromLocalVector(CVector2::X);
+//            } else {
+                SetWheelSpeedsFromLocalVector(CVector2::X);
+            //}
         }
     } else {
         if (bCollision) {

@@ -120,6 +120,10 @@ CColor WmsLoopFunctions::GetFloorColor(const CVector2& c_position_on_plane) {
 void WmsLoopFunctions::PreStep() {
    /* Logic to pick and drop food items */
 
+    if ((GetSpace().GetSimulationClock() > 0) && (start == mcs(0))){
+        start = micros();
+    }
+
    /* Check whether a robot is on a food item */
    CSpace::TMapPerType& m_cFootbots = GetSpace().GetEntitiesByType("foot-bot");
 
@@ -160,6 +164,12 @@ void WmsLoopFunctions::PreStep() {
                 sFoodData.FoodItemIdx = i;
                 --m_unCollectedFood;
                 std::cout << m_unCollectedFood << std::endl;
+
+                if (m_unCollectedFood == 0){
+                    std::chrono::microseconds elapsed = micros() - start;
+                    std::cout << std::to_string(elapsed.count()) << std::endl;
+                }
+
                 /* We are done */
                 bDone = true;
              }
