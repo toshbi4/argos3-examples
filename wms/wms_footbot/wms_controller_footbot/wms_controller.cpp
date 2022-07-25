@@ -216,7 +216,7 @@ void WmsController::ControlStep() {
     } else {
         if (bCollision) {
             SetWheelSpeedsFromLocalVector(m_sWheelTurningParams.MaxSpeed * 1.0 * DiffusionVector(bCollision) +
-                                          m_sWheelTurningParams.MaxSpeed * 0.2 * speed_test);
+                                          m_sWheelTurningParams.MaxSpeed * 0.1 * speed_test);
         } else {
             SetWheelSpeedsFromLocalVector(m_sWheelTurningParams.MaxSpeed * speed_test);
         }

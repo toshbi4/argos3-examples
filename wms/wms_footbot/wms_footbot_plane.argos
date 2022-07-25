@@ -12,7 +12,7 @@
   <!-- * General configuration * -->
   <!-- ************************* -->
   <framework>
-    <system threads="0" />
+    <system threads="4" pin_threads_to_cores="true" method="balance_quantity"/>
     <experiment length="0"
                 ticks_per_second="10"
                 random_seed="200" />
@@ -78,29 +78,29 @@
   <!-- *********************** -->
   <!-- * Arena configuration * -->
   <!-- *********************** -->
-  <arena size="20, 15, 2" center="0,0,1">
+  <arena size="100, 100, 2" center="0,0,1">
 
     <floor id="floor"
            source="loop_functions"
            pixels_per_meter="50" />
 
-    <box id="wall_north" size="20,0.1,0.1" movable="false">
-      <body position="0,7,0" orientation="0,0,0" />
+    <box id="wall_north" size="100,0.1,0.1" movable="false">
+      <body position="0,50,0" orientation="0,0,0" />
     </box>
-    <box id="wall_south" size="20,0.1,0.1" movable="false">
-      <body position="0,-7,0" orientation="0,0,0" />
+    <box id="wall_south" size="100,0.1,0.1" movable="false">
+      <body position="0,-50,0" orientation="0,0,0" />
     </box>
-    <box id="wall_east" size="0.1,15,0.1" movable="false">
-      <body position="9.5,0,0" orientation="0,0,0" />
+    <box id="wall_east" size="0.1,100,0.1" movable="false">
+      <body position="50,0,0" orientation="0,0,0" />
     </box>
-    <box id="wall_west" size="0.1,15,0.1" movable="false">
-      <body position="-9.5,0,0" orientation="0,0,0" />
+    <box id="wall_west" size="0.1,100,0.1" movable="false">
+      <body position="-50,0,0" orientation="0,0,0" />
     </box>
 
     <distribute>
-      <position method="uniform" min="4,-6.5,0" max="9,6.5,0" />
+      <position method="uniform" min="-48,-48,0" max="48,48,0" />
       <orientation method="uniform" min="0,0,0" max="360,0,0" />
-      <entity quantity="50" max_trials="100">
+      <entity quantity="500" max_trials="100">
         <foot-bot id="fb">
           <controller config="ffc" />
         </foot-bot>
@@ -113,10 +113,155 @@
   <!-- * Physics engines * -->
   <!-- ******************* -->
   <physics_engines>
-    <dynamics2d id="dyn2d">
-        <differential_steering max_force="0.001" max_torque="0.001"/>
+    
+    <dynamics2d id="dyn2d_0">
+      <boundaries>
+        <top height="1" />
+        <bottom height="0" />
+        <sides>
+          <vertex point="-50.000000,-50.000000" />
+          <vertex point="-32.000000,-50.000000" />
+          <vertex point="-32.000000,0.000000" />
+          <vertex point="-50.000000,0.000000" />
+        </sides>
+      </boundaries>
     </dynamics2d>
-  </physics_engines>
+    <dynamics2d id="dyn2d_1">
+      <boundaries>
+        <top height="1" />
+        <bottom height="0" />
+        <sides>
+          <vertex point="-32.000000,-50.000000" />
+          <vertex point="-16.000000,-50.000000" />
+          <vertex point="-16.000000,0.000000" />
+          <vertex point="-32.000000,0.000000" />
+        </sides>
+      </boundaries>
+    </dynamics2d>
+    <dynamics2d id="dyn2d_2">
+      <boundaries>
+        <top height="1" />
+        <bottom height="0" />
+        <sides>
+          <vertex point="-16.000000,-50.000000" />
+          <vertex point="0.000000,-50.000000" />
+          <vertex point="0.000000,0.000000" />
+          <vertex point="-16.000000,0.000000" />
+        </sides>
+      </boundaries>
+    </dynamics2d>
+    <dynamics2d id="dyn2d_3">
+      <boundaries>
+        <top height="1" />
+        <bottom height="0" />
+        <sides>
+          <vertex point="0.000000,-50.000000" />
+          <vertex point="16.000000,-50.000000" />
+          <vertex point="16.000000,0.000000" />
+          <vertex point="0.000000,0.000000" />
+        </sides>
+      </boundaries>
+    </dynamics2d>
+    <dynamics2d id="dyn2d_4">
+      <boundaries>
+        <top height="1" />
+        <bottom height="0" />
+        <sides>
+          <vertex point="16.000000,-50.000000" />
+          <vertex point="32.000000,-50.000000" />
+          <vertex point="32.000000,0.000000" />
+          <vertex point="16.000000,0.000000" />
+        </sides>
+      </boundaries>
+    </dynamics2d>
+    <dynamics2d id="dyn2d_5">
+      <boundaries>
+        <top height="1" />
+        <bottom height="0" />
+        <sides>
+          <vertex point="32.000000,-50.000000" />
+          <vertex point="50.000000,-50.000000" />
+          <vertex point="50.000000,0.000000" />
+          <vertex point="32.000000,0.000000" />
+        </sides>
+      </boundaries>
+    </dynamics2d>
+
+    <dynamics2d id="dyn2d_6">
+      <boundaries>
+        <top height="1" />
+        <bottom height="0" />
+        <sides>
+          <vertex point="-50.000000,0.000000" />
+          <vertex point="-32.000000,0.000000" />
+          <vertex point="-32.000000,50.000000" />
+          <vertex point="-50.000000,50.000000" />
+        </sides>
+      </boundaries>
+    </dynamics2d>
+    <dynamics2d id="dyn2d_7">
+      <boundaries>
+        <top height="1" />
+        <bottom height="0" />
+        <sides>
+          <vertex point="-32.000000,0.000000" />
+          <vertex point="-16.000000,0.000000" />
+          <vertex point="-16.000000,50.000000" />
+          <vertex point="-32.000000,50.000000" />
+        </sides>
+      </boundaries>
+    </dynamics2d>
+    <dynamics2d id="dyn2d_8">
+      <boundaries>
+        <top height="1" />
+        <bottom height="0" />
+        <sides>
+          <vertex point="-16.000000,0.000000" />
+          <vertex point="0.000000,0.000000" />
+          <vertex point="0.000000,50.000000" />
+          <vertex point="-16.000000,50.000000" />
+        </sides>
+      </boundaries>
+    </dynamics2d>
+
+    <dynamics2d id="dyn2d_9">
+      <boundaries>
+        <top height="1" />
+        <bottom height="0" />
+        <sides>
+          <vertex point="0.000000,0.000000" />
+          <vertex point="16.000000,0.000000" />
+          <vertex point="16.000000,50.000000" />
+          <vertex point="0.000000,50.000000" />
+        </sides>
+      </boundaries>
+    </dynamics2d>
+
+    <dynamics2d id="dyn2d_10">
+      <boundaries>
+        <top height="1" />
+        <bottom height="0" />
+        <sides>
+          <vertex point="16.000000,0.000000" />
+          <vertex point="32.000000,0.000000" />
+          <vertex point="32.000000,50.000000" />
+          <vertex point="16.000000,50.000000" />
+        </sides>
+      </boundaries>
+    </dynamics2d>
+    <dynamics2d id="dyn2d_11">
+      <boundaries>
+        <top height="1" />
+        <bottom height="0" />
+        <sides>
+          <vertex point="32.000000,0.000000" />
+          <vertex point="50.000000,0.000000" />
+          <vertex point="50.000000,50.000000" />
+          <vertex point="32.000000,50.000000" />
+        </sides>
+      </boundaries>
+    </dynamics2d>
+</physics_engines>
 
   <!-- ********* -->
   <!-- * Media * -->
@@ -138,6 +283,6 @@
       </camera>
       <user_functions label="wms_qt_user_functions" />
     </qt-opengl>
-  </visualization> 
+  </visualization>
 
 </argos-configuration>
