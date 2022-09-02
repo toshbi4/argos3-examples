@@ -3,16 +3,19 @@
 #include <argos3/core/utility/configuration/argos_configuration.h>
 #include <argos3/plugins/robots/foot-bot/simulator/footbot_entity.h>
 #include <wms/pathplanning/wms_controller_footbot/wms_controller.h>
+#include <argos3/plugins/simulator/entities/box_entity.h>
 
 /****************************************/
 /****************************************/
 
 WmsLoopFunctions::WmsLoopFunctions() :
-   m_cForagingArenaSideX(4.0f, 9.0f),
+   m_cForagingArenaSideX(4.0f, 8.5f),
    m_cForagingArenaSideY(-6.5f, 6.5f),
    m_pcFloor(NULL),
    m_unCollectedFood(0),
-   pathPlanning{m_cForagingArenaSideX, m_cForagingArenaSideY}
+   pathPlanning{m_cForagingArenaSideX, m_cForagingArenaSideY},
+   pointsCount{5},
+   borderIdNumber{0}
 {
 }
 
@@ -60,12 +63,81 @@ void WmsLoopFunctions::Init(TConfigurationNode& t_node) {
           }
       }
 
-      pathPlanning.init(robots_num);
+      pathPlanning.init(robots_num, pointsCount);
 
    }
    catch(CARGoSException& ex) {
       THROW_ARGOSEXCEPTION_NESTED("Error parsing loop functions!", ex);
    }
+
+    //Create obstacles and set a free place
+    createBorder(CVector2(-9.1f, -6.0f), CVector2(-9.0f, 6.0f));
+
+    createBorder(CVector2(-9.0f, 6.0f), CVector2(4.0f, 6.1f));
+    freeSpace.push_back(FreeRectangle{CVector2(-9.0f, 5.5f), CVector2(4.0f, 6.0f)});
+    createBorder(CVector2(-9.0f, 4.5f), CVector2(4.0f, 5.5f));
+
+    freeSpace.push_back(FreeRectangle{CVector2(-9.0f, 4.0f), CVector2(4.0f, 4.5f)});
+    createBorder(CVector2(-9.0f, 3.0f), CVector2(4.0f, 4.0f));
+
+    freeSpace.push_back(FreeRectangle{CVector2(-9.0f, 2.5f), CVector2(4.0f, 3.0f)});
+    createBorder(CVector2(-9.0f, 1.5f), CVector2(4.0f, 2.5f));
+
+    freeSpace.push_back(FreeRectangle{CVector2(-9.0f, 1.0f), CVector2(4.0f, 1.5f)});
+    createBorder(CVector2(-9.0f, -1.0f), CVector2(4.0f, 1.0f));
+
+    freeSpace.push_back(FreeRectangle{CVector2(-9.0f, -1.5f), CVector2(4.0f, -1.0f)});
+    createBorder(CVector2(-9.0f, -2.5f), CVector2(4.0f, -1.5f));
+
+    freeSpace.push_back(FreeRectangle{CVector2(-9.0f, -3.0f), CVector2(4.0f, -2.5f)});
+    createBorder(CVector2(-9.0f, -4.0f), CVector2(4.0f, -3.0f));
+
+    freeSpace.push_back(FreeRectangle{CVector2(-9.0f, -4.5f), CVector2(4.0f, -4.0f)});
+    createBorder(CVector2(-9.0f, -5.5f), CVector2(4.0f, -4.5f));
+
+    freeSpace.push_back(FreeRectangle{CVector2(-9.0f, -6.0f), CVector2(4.0f, -5.5f)});
+    createBorder(CVector2(-9.0f, -6.1f), CVector2(4.0f, -6.0f));
+
+    createBorder(CVector2(4.0f, 6.5f), CVector2(9.0f, 6.6f));
+    createBorder(CVector2(3.9f, 6.0f), CVector2(4.0f, 6.5f));
+    freeSpace.push_back(FreeRectangle{CVector2(4.0f, -6.5f), CVector2(9.0f, 6.5f)});
+    createBorder(CVector2(3.9f, -6.5f), CVector2(4.0f, -6.0f));
+    createBorder(CVector2(4.0f, -6.6f), CVector2(9.0f, -6.5f));
+    createBorder(CVector2(9.0f, -6.5f), CVector2(9.1f, 6.5f));
+}
+
+void WmsLoopFunctions::createBorder(CVector2 firstCoordinate, CVector2 secondCoordinate){
+
+    CVector2 boxCenter {CVector2((secondCoordinate - firstCoordinate) * 0.5 + firstCoordinate)};
+    CVector3 boxSize {secondCoordinate.GetX() - firstCoordinate.GetX(),
+                      secondCoordinate.GetY() - firstCoordinate.GetY(),
+                      0.1f};
+
+    // Custom desctribution
+    try {
+       CBoxEntity* pcBox;
+       std::ostringstream cBoxId;
+
+          /* Make the id */
+          cBoxId.str("");
+          cBoxId << "box" << borderIdNumber;
+          /* Create the box in the origin and add it to ARGoS space */
+          pcBox = new CBoxEntity(
+             cBoxId.str(),                                    //str_id
+             CVector3(boxCenter.GetX(), boxCenter.GetY(), 0), //center c_position
+             CQuaternion(0.0f,0.0f,0.0f,0.0f),                //c_orientation
+             false,                                           //bool b_movable
+             boxSize);                                        //c_size
+
+          AddEntity(*pcBox);
+
+    }
+    catch(CARGoSException& ex) {
+       THROW_ARGOSEXCEPTION_NESTED("While placing robots in a line", ex);
+    }
+
+    borderIdNumber++;
+
 }
 
 /****************************************/
@@ -100,11 +172,26 @@ CColor WmsLoopFunctions::GetFloorColor(const CVector2& c_position_on_plane) {
 //   if(c_position_on_plane.GetX() > 8.0f) {
 //      return CColor::GRAY50;
 //   }
-   for(UInt32 i = 0; i < pathPlanning.getGoals().size(); ++i) {
-      if((c_position_on_plane - pathPlanning.getGoals()[i]).SquareLength() < m_fFoodSquareRadius) {
-         return CColor::BLACK;
-      }
-   }
+
+    /* Check whether a robot is on a food item */
+    CSpace::TMapPerType& m_cFootbots = GetSpace().GetEntitiesByType("foot-bot");
+
+    uint16_t robot_id = -1;
+    for(CSpace::TMapPerType::iterator it = m_cFootbots.begin();
+        it != m_cFootbots.end();
+        ++it) {
+
+       robot_id += 1;
+       /* Get handle to foot-bot entity and controller */
+       CFootBotEntity& cFootBot = *any_cast<CFootBotEntity*>(it->second);
+       WmsController& cController = dynamic_cast<WmsController&>(cFootBot.GetControllableEntity().GetController());
+
+       if((c_position_on_plane - pathPlanning.getGoals()[robot_id][cController.pathPointNumber]).SquareLength() < m_fFoodSquareRadius) {
+          return CColor::BLACK;
+       }
+
+    }
+
    return CColor::WHITE;
 }
 
@@ -142,25 +229,26 @@ void WmsLoopFunctions::PreStep() {
                cFootBot.GetEmbodiedEntity().GetOriginAnchor().Position.GetY());
       cOrient = cFootBot.GetEmbodiedEntity().GetOriginAnchor().Orientation;
 
-
-
-      cController.setCoordinates(cPos, cOrient, pathPlanning.getGoals()[robot_id]);
-
       /* Get food data */
       WmsController::SFoodData& sFoodData = cController.GetFoodData();
+
+      if (cController.pathPointNumber <= pointsCount - 1) {
+          sFoodData.HasFoodItem = false;
+          cController.setCoordinates(cPos, cOrient, pathPlanning.getGoals()[robot_id][cController.pathPointNumber]);
+      }
+
       /* The foot-bot has a food item */
       if(sFoodData.HasFoodItem) {
-          sFoodData.HasFoodItem = false;
+
       }
       else {
           /* Check whether the foot-bot is on a food item */
           bool bDone = false;
-          for(size_t i = 0; i < pathPlanning.getGoals().size() && !bDone; ++i) {
-             if((cPos - pathPlanning.getGoals()[i]).SquareLength() < m_fFoodSquareRadius) {
+             if((cPos - pathPlanning.getGoals()[robot_id][cController.pathPointNumber]).SquareLength() < m_fFoodSquareRadius) {
                 /* The foot-bot is now carrying an item */
                 sFoodData.HasFoodItem = true;
-                sFoodData.FoodItemIdx = i;
-                --m_unCollectedFood;
+                //sFoodData.FoodItemIdx = i;
+                //--m_unCollectedFood;
                 std::cout << m_unCollectedFood << std::endl;
 
                 if (m_unCollectedFood == 0){
@@ -170,12 +258,13 @@ void WmsLoopFunctions::PreStep() {
 
                 /* We are done */
                 bDone = true;
-                pathPlanning.reachedPoint(robot_id);
 
                 /* The floor texture must be updated */
                 m_pcFloor->SetChanged();
-             }
-         }
+
+                pathPlanning.reachedPoint(robot_id);
+                cController.pathPointNumber++;
+            }
       }
    }
 }

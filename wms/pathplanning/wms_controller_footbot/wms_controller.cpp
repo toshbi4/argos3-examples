@@ -103,7 +103,8 @@ void WmsController::SStateData::Reset() {
 /****************************************/
 /****************************************/
 
-WmsController::WmsController() :
+WmsController::WmsController() : 
+   pathPointNumber(0),
    m_pcWheels(NULL),
    m_pcLEDs(NULL),
    m_pcRABA(NULL),
@@ -111,7 +112,8 @@ WmsController::WmsController() :
    m_pcProximity(NULL),
    m_pcLight(NULL),
    m_pcGround(NULL),
-   m_pcRNG(NULL) {}
+   m_pcRNG(NULL)
+{}
 
 /****************************************/
 /****************************************/

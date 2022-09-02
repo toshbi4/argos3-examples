@@ -29,6 +29,8 @@ public:
 
 private:
 
+   void createBorder(CVector2 firstCoordinate, CVector2 secondCoordinate);
+
    // Get time stamp in microseconds.
    std::chrono::microseconds micros()
    {
@@ -46,7 +48,16 @@ private:
 
    UInt32 m_unCollectedFood;
    PathPlanning pathPlanning;
+   uint16_t pointsCount;
    std::chrono::microseconds start;
+
+   struct FreeRectangle {
+        CVector2 firstCoord;
+        CVector2 secondCoord;
+   };
+
+   std::vector<FreeRectangle> freeSpace;
+   uint8_t borderIdNumber;
 };
 
 #endif

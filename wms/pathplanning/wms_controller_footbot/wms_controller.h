@@ -45,6 +45,8 @@ class WmsController : public CCI_Controller {
 
 public:
 
+   uint8_t pathPointNumber;
+
    /*
     * This structure holds data about food collecting by the robots
     */

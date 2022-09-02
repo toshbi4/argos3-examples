@@ -15,15 +15,15 @@ class PathPlanning {
 public:
 
     PathPlanning(CRange<Real> xRange, CRange<Real> yRange);
-    void init(uint16_t robots_num);
-    std::vector<CVector2> getGoals();
+    void init(uint16_t robots_num, uint16_t pointsCount);
+    std::vector<std::vector<CVector2>> getGoals();
     void reachedPoint(uint16_t robot_id);
 
 private:
 
     uint8_t var;
     CRandom::CRNG* m_pcRNG;
-    std::vector<CVector2> m_cGoalsPos;
+    std::vector<std::vector<CVector2>> m_cGoalsPos;
     CRange<Real> xRange;
     CRange<Real> yRange;
 
