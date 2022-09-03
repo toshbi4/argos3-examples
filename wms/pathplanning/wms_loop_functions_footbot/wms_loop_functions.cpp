@@ -13,8 +13,8 @@ WmsLoopFunctions::WmsLoopFunctions() :
    m_cForagingArenaSideY(-6.5f, 6.5f),
    m_pcFloor(NULL),
    m_unCollectedFood(0),
-   pathPlanning{m_cForagingArenaSideX, m_cForagingArenaSideY},
-   pointsCount{5},
+   pathPlanning{},
+   pointsCount{2},
    borderIdNumber{0}
 {
 }
@@ -23,6 +23,8 @@ WmsLoopFunctions::WmsLoopFunctions() :
 /****************************************/
 
 void WmsLoopFunctions::Init(TConfigurationNode& t_node) {
+
+    uint16_t robots_num = 0;
 
     try {
 
@@ -38,7 +40,7 @@ void WmsLoopFunctions::Init(TConfigurationNode& t_node) {
 
       CSpace::TMapPerType& m_cFootbots = GetSpace().GetEntitiesByType("foot-bot");
       std::cout << m_cFootbots.size() << std::endl;
-      uint16_t robots_num = m_cFootbots.size();
+      robots_num = m_cFootbots.size();
       m_unCollectedFood = robots_num;
 
       /* Get the output file name from XML */
@@ -62,8 +64,6 @@ void WmsLoopFunctions::Init(TConfigurationNode& t_node) {
               std::cout << cCenter.X << std::endl;
           }
       }
-
-      pathPlanning.init(robots_num, pointsCount);
 
    }
    catch(CARGoSException& ex) {
@@ -100,10 +100,12 @@ void WmsLoopFunctions::Init(TConfigurationNode& t_node) {
 
     createBorder(CVector2(4.0f, 6.5f), CVector2(9.0f, 6.6f));
     createBorder(CVector2(3.9f, 6.0f), CVector2(4.0f, 6.5f));
-    freeSpace.push_back(FreeRectangle{CVector2(4.0f, -6.5f), CVector2(9.0f, 6.5f)});
+    freeSpace.push_back(FreeRectangle{CVector2(4.0f, -6.5f), CVector2(9.0f, 6.5f), 1});
     createBorder(CVector2(3.9f, -6.5f), CVector2(4.0f, -6.0f));
     createBorder(CVector2(4.0f, -6.6f), CVector2(9.0f, -6.5f));
     createBorder(CVector2(9.0f, -6.5f), CVector2(9.1f, 6.5f));
+
+    pathPlanning.init(robots_num, pointsCount, freeSpace);
 }
 
 void WmsLoopFunctions::createBorder(CVector2 firstCoordinate, CVector2 secondCoordinate){

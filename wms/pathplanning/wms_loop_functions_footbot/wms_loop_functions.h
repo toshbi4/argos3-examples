@@ -51,11 +51,6 @@ private:
    uint16_t pointsCount;
    std::chrono::microseconds start;
 
-   struct FreeRectangle {
-        CVector2 firstCoord;
-        CVector2 secondCoord;
-   };
-
    std::vector<FreeRectangle> freeSpace;
    uint8_t borderIdNumber;
 };
