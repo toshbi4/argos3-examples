@@ -154,39 +154,38 @@ void WmsController::Init(TConfigurationNode& t_node) {
 
 void WmsController::setCoordinates(CVector2& cPos, CQuaternion& cOrient, CVector2& cGoalPos){
 
-    if (m_sFoodData.HasFoodItem){
-        cGoalPos.Set(20.0f, 20.0f);
-    }
+   if (m_sFoodData.HasFoodItem){
+      cGoalPos.Set(20.0f, 20.0f);
+   }
 
+   // yaw (z-axis rotation)
+   double siny_cosp = 2 * (cOrient.GetW() * cOrient.GetZ() + cOrient.GetX() * cOrient.GetY());
+   double cosy_cosp = 1 - 2 * (cOrient.GetY() * cOrient.GetY() + cOrient.GetZ() * cOrient.GetZ());
+   double yaw = std::atan2(siny_cosp, cosy_cosp);
+   double cos_yaw = cos(yaw); //radians
+   double sin_yaw = sin(yaw); //radians
 
-        // yaw (z-axis rotation)
-        double siny_cosp = 2 * (cOrient.GetW() * cOrient.GetZ() + cOrient.GetX() * cOrient.GetY());
-        double cosy_cosp = 1 - 2 * (cOrient.GetY() * cOrient.GetY() + cOrient.GetZ() * cOrient.GetZ());
-        double yaw = std::atan2(siny_cosp, cosy_cosp);
-        double cos_yaw = cos(yaw); //radians
-        double sin_yaw = sin(yaw); //radians
+   double sin_theta = - cos_yaw; // yaw = theta + 90
+   double cos_theta = sin_yaw; // yaw = theta + 90
 
-        double sin_theta = - cos_yaw; // yaw = theta + 90
-        double cos_theta = sin_yaw; // yaw = theta + 90
+   //    Real rot_values[4]{cos(yaw), sin(yaw), -sin(yaw), cos(yaw)};
+   //    CMatrix<2, 2> rot(rot_values);
+   CVector2 goalPos(cGoalPos.GetX() - cPos.GetX(), cGoalPos.GetY() - cPos.GetY());
 
-    //    Real rot_values[4]{cos(yaw), sin(yaw), -sin(yaw), cos(yaw)};
-    //    CMatrix<2, 2> rot(rot_values);
-        CVector2 goalPos(cGoalPos.GetX() - cPos.GetX(), cGoalPos.GetY() - cPos.GetY());
+   //= (static_cast<CMatrix<1, 2>>(goalPos) * rot/* + static_cast<CMatrix<1, 2>>(cPos)*/).GetTransposed();
+   CMatrix<2, 1> localVec;
 
-        CMatrix<2, 1> localVec; //= (static_cast<CMatrix<1, 2>>(goalPos) * rot/* + static_cast<CMatrix<1, 2>>(cPos)*/).GetTransposed();
+   localVec(0) = goalPos.GetX()*cos_theta + goalPos.GetY()*sin_theta;
+   localVec(1) = -goalPos.GetX()*sin_theta + goalPos.GetY()*cos_theta;
 
+   // std::cout << "---" << std::endl;
+   // std::cout << "yaw = " << yaw << std::endl;
+   // std::cout << "cos(yaw) = " << cos_theta << std::endl;
+   // std::cout << "sin(yaw) = " << sin_theta << std::endl;
+   // std::cout << "localCoords: " << localVec(0) << " " << localVec(1) << std::endl;
+   // std::cout << "GoalPos: " << goalPos.GetX() << " " << goalPos.GetY() << std::endl;
 
-        localVec(0) = goalPos.GetX()*cos_theta + goalPos.GetY()*sin_theta;
-        localVec(1) = -goalPos.GetX()*sin_theta + goalPos.GetY()*cos_theta;
-
-        // std::cout << "---" << std::endl;
-        // std::cout << "yaw = " << yaw << std::endl;
-        // std::cout << "cos(yaw) = " << cos_theta << std::endl;
-        // std::cout << "sin(yaw) = " << sin_theta << std::endl;
-        // std::cout << "localCoords: " << localVec(0) << " " << localVec(1) << std::endl;
-        // std::cout << "GoalPos: " << goalPos.GetX() << " " << goalPos.GetY() << std::endl;
-
-        speed_test.Set(localVec(0), localVec(1));
+   speed_test.Set(localVec(0), localVec(1));
 
 };
 
@@ -194,35 +193,36 @@ void WmsController::setCoordinates(CVector2& cPos, CQuaternion& cOrient, CVector
 /****************************************/
 
 void WmsController::ControlStep() {
-    CVector2 speed {0, 2.0};
 
-    bool bCollision = false;
-    CVector2 cDiffusion = DiffusionVector(bCollision);
+   CVector2 speed {0, 2.0};
 
-    if (m_sFoodData.HasFoodItem){
-        if (bCollision) {
-            SetWheelSpeedsFromLocalVector(CVector2(1.0f, 5.0f));
-        } else {
-//            const CCI_FootBotProximitySensor::TReadings& tProxReads = m_pcProximity->GetReadings();
-//            uint8_t summ_val = 0;
-//            for(size_t i = 0; i < tProxReads.size(); ++i) {
-//               summ_val += tProxReads[i].Value;
-//            }
-//            std::cout << summ_val << std::endl;
-//            if (summ_val > 0){
-//                SetWheelSpeedsFromLocalVector(CVector2::X);
-//            } else {
-                SetWheelSpeedsFromLocalVector(CVector2::X);
-            //}
-        }
-    } else {
-        if (bCollision) {
-            SetWheelSpeedsFromLocalVector(m_sWheelTurningParams.MaxSpeed * 1.0 * DiffusionVector(bCollision) +
-                                          m_sWheelTurningParams.MaxSpeed * 0.1 * speed_test);
-        } else {
-            SetWheelSpeedsFromLocalVector(m_sWheelTurningParams.MaxSpeed * speed_test);
-        }
-    }
+   bool bCollision = false;
+   CVector2 cDiffusion = DiffusionVector(bCollision);
+
+   if (m_sFoodData.HasFoodItem){
+      if (bCollision) {
+         SetWheelSpeedsFromLocalVector(CVector2(1.0f, 5.0f));
+      } else {
+      //            const CCI_FootBotProximitySensor::TReadings& tProxReads = m_pcProximity->GetReadings();
+      //            uint8_t summ_val = 0;
+      //            for(size_t i = 0; i < tProxReads.size(); ++i) {
+      //               summ_val += tProxReads[i].Value;
+      //            }
+      //            std::cout << summ_val << std::endl;
+      //            if (summ_val > 0){
+      //                SetWheelSpeedsFromLocalVector(CVector2::X);
+      //            } else {
+             SetWheelSpeedsFromLocalVector(CVector2::X);
+         //}
+      }
+   } else {
+      if (bCollision) {
+         SetWheelSpeedsFromLocalVector(m_sWheelTurningParams.MaxSpeed * 1.0 * DiffusionVector(bCollision) +
+                                       m_sWheelTurningParams.MaxSpeed * 0.1 * speed_test);
+      } else {
+         SetWheelSpeedsFromLocalVector(m_sWheelTurningParams.MaxSpeed * speed_test);
+      }
+   }
 }
 
 /****************************************/
