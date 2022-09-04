@@ -2,11 +2,11 @@
 #define PATHPLANNING_H
 
 #include <stdint.h>
-/* 2D vector definition */
-#include <argos3/core/utility/math/vector2.h>
+#include <vector>
+
 #include <argos3/core/utility/math/range.h>
 #include <argos3/core/utility/math/rng.h>
-#include <vector>
+#include <argos3/core/utility/math/vector2.h>
 
 using namespace argos;
 
@@ -22,8 +22,8 @@ public:
 
    PathPlanning();
    void init(uint16_t robots_num, uint16_t pointsCount, std::vector<FreeRectangle> freeSpace);
+   std::vector<CVector2> robotPath(uint16_t robot_id, std::vector<FreeRectangle> freeSpace);
    std::vector<std::vector<CVector2>> getGoals();
-   void reachedPoint(uint16_t robot_id);
 
 private:
 

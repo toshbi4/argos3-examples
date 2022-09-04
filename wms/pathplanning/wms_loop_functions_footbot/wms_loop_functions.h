@@ -1,13 +1,13 @@
 #ifndef FORAGING_LOOP_FUNCTIONS_H
 #define FORAGING_LOOP_FUNCTIONS_H
 
+#include <chrono>
+
 #include <argos3/core/simulator/loop_functions.h>
 #include <argos3/core/simulator/entity/floor_entity.h>
 #include <argos3/core/utility/math/range.h>
 #include <argos3/core/utility/math/rng.h>
-/* 2D vector definition */
 #include <argos3/core/utility/math/vector2.h>
-#include <chrono>
 #include <wms/pathplanning/wms_controller_footbot/pathplanning.h>
 
 using namespace argos;
@@ -29,6 +29,7 @@ public:
 
 private:
 
+   void createScene();
    void createBorder(CVector2 firstCoordinate, CVector2 secondCoordinate);
 
    // Get time stamp in microseconds.
@@ -43,10 +44,9 @@ private:
    CRange<Real> m_cForagingArenaSideX, m_cForagingArenaSideY;
    CFloorEntity* m_pcFloor;
 
-   std::string m_strOutput;
-   std::ofstream m_cOutput;
+//   std::string m_strOutput;
+//   std::ofstream m_cOutput;
 
-   UInt32 m_unCollectedFood;
    PathPlanning pathPlanning;
    uint16_t pointsCount;
    std::chrono::microseconds start;
