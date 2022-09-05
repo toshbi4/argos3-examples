@@ -6,14 +6,13 @@
 #include <argos3/core/utility/math/rng.h>
 #include <argos3/core/utility/math/vector2.h>
 #include <argos3/core/utility/math/quaternion.h>
+#include "wms/pathplanning/wms_controller_footbot/pid.h"
 
 using namespace argos;
 
 class WmsController : public CCI_Controller {
 
 public:
-
-   uint8_t pathPointNumber;
 
    struct SWheelTurningParams {
       /*
@@ -38,9 +37,6 @@ public:
       void Init(TConfigurationNode& t_tree);
    };
 
-public:
-
-
    WmsController();
 
    virtual ~WmsController() {}
@@ -63,18 +59,20 @@ public:
        hasCargo = val;
    }
 
+   uint8_t pathPointNumber;
+
 private:
+
+   void SetWheelSpeedsFromLocalVector(const CVector2& c_heading);
+   void pidControl(const CVector2& c_heading);
+   void simpleControl(const CVector2& c_heading);
 
    CVector2 speedVector;
-   void SetWheelSpeedsFromLocalVector(const CVector2& c_heading);
-
-private:
-
    CCI_DifferentialSteeringActuator* m_pcWheels;
    CRandom::CRNG* m_pcRNG;
    SWheelTurningParams m_sWheelTurningParams;
    bool hasCargo;
-
+   PID pid;
 };
 
 #endif

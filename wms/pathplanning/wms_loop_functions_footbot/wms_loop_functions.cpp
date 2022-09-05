@@ -125,6 +125,8 @@ void WmsLoopFunctions::Reset() {
        cController.reset();
     }
 
+    m_pcFloor->SetChanged();
+
 }
 
 void WmsLoopFunctions::Destroy() {
@@ -197,7 +199,6 @@ void WmsLoopFunctions::PreStep() {
          m_pcFloor->SetChanged();
          cController.pathPointNumber++;
       }
-
 
       robot_id += 1;
 
