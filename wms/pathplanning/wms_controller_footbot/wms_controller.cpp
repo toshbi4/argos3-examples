@@ -25,6 +25,7 @@ WmsController::WmsController() :
    m_pcWheels(NULL),
    m_pcRNG(NULL),
    hasCargo (0),
+   stop{false},
    pid {0.1, 100, -100, 1, 0.01, 0.5}
 {}
 
@@ -98,6 +99,11 @@ void WmsController::SetWheelSpeedsFromLocalVector(const CVector2& c_heading) {
 }
 
 void WmsController::pidControl(const CVector2& c_heading){
+
+   if (stop){
+       m_pcWheels->SetLinearVelocity(0.0f, 0.0f);
+       return;
+   }
 
    CRadians cHeadingAngle = c_heading.Angle().SignedNormalize() - CRadians::PI_OVER_TWO;
 

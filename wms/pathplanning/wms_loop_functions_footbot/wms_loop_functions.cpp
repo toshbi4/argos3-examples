@@ -10,7 +10,8 @@ WmsLoopFunctions::WmsLoopFunctions() :
    m_cForagingArenaSideX(4.0f, 8.5f),
    m_cForagingArenaSideY(-6.5f, 6.5f),
    m_pcFloor(NULL),
-   borderIdNumber{0}
+   borderIdNumber{0},
+   loadedRobots{0}
 {
 }
 
@@ -41,28 +42,29 @@ void WmsLoopFunctions::createScene(){
     createBorder(CVector2(-9.1f, -6.0f), CVector2(-9.0f, 6.0f));
 
     createBorder(CVector2(-9.0f, 6.0f), CVector2(4.0f, 6.1f));
-    freeSpace.push_back(FreeRectangle{CVector2(-9.0f, 5.5f), CVector2(4.0f, 6.0f)});
+    // TODO: FIX HINT BY OBSTALCE AVOIDANCE
+    freeSpace.push_back(FreeRectangle{CVector2(-9.0f, 5.5f + 0.1f), CVector2(4.0f, 6.0f - 0.1f)});
     createBorder(CVector2(-9.0f, 4.5f), CVector2(4.0f, 5.5f));
 
-    freeSpace.push_back(FreeRectangle{CVector2(-9.0f, 4.0f), CVector2(4.0f, 4.5f)});
+    freeSpace.push_back(FreeRectangle{CVector2(-9.0f, 4.0f + 0.1f), CVector2(4.0f, 4.5f - 0.1f)});
     createBorder(CVector2(-9.0f, 3.0f), CVector2(4.0f, 4.0f));
 
-    freeSpace.push_back(FreeRectangle{CVector2(-9.0f, 2.5f), CVector2(4.0f, 3.0f)});
+    freeSpace.push_back(FreeRectangle{CVector2(-9.0f, 2.5f + 0.1f), CVector2(4.0f, 3.0f - 0.1f)});
     createBorder(CVector2(-9.0f, 1.5f), CVector2(4.0f, 2.5f));
 
-    freeSpace.push_back(FreeRectangle{CVector2(-9.0f, 1.0f), CVector2(4.0f, 1.5f)});
+    freeSpace.push_back(FreeRectangle{CVector2(-9.0f, 1.0f + 0.1f), CVector2(4.0f, 1.5f - 0.1f)});
     createBorder(CVector2(-9.0f, -1.0f), CVector2(4.0f, 1.0f));
 
-    freeSpace.push_back(FreeRectangle{CVector2(-9.0f, -1.5f), CVector2(4.0f, -1.0f)});
+    freeSpace.push_back(FreeRectangle{CVector2(-9.0f, -1.5f + 0.1f), CVector2(4.0f, -1.0f - 0.1f)});
     createBorder(CVector2(-9.0f, -2.5f), CVector2(4.0f, -1.5f));
 
-    freeSpace.push_back(FreeRectangle{CVector2(-9.0f, -3.0f), CVector2(4.0f, -2.5f)});
+    freeSpace.push_back(FreeRectangle{CVector2(-9.0f, -3.0f + 0.1f), CVector2(4.0f, -2.5f - 0.1f)});
     createBorder(CVector2(-9.0f, -4.0f), CVector2(4.0f, -3.0f));
 
-    freeSpace.push_back(FreeRectangle{CVector2(-9.0f, -4.5f), CVector2(4.0f, -4.0f)});
+    freeSpace.push_back(FreeRectangle{CVector2(-9.0f, -4.5f + 0.1f), CVector2(4.0f, -4.0f - 0.2f)});
     createBorder(CVector2(-9.0f, -5.5f), CVector2(4.0f, -4.5f));
 
-    freeSpace.push_back(FreeRectangle{CVector2(-9.0f, -6.0f), CVector2(4.0f, -5.5f)});
+    freeSpace.push_back(FreeRectangle{CVector2(-9.0f, -6.0f + 0.1f), CVector2(4.0f, -5.5f - 0.1f)});
     createBorder(CVector2(-9.0f, -6.1f), CVector2(4.0f, -6.0f));
 
     createBorder(CVector2(4.0f, 6.5f), CVector2(9.0f, 6.6f));
@@ -117,7 +119,7 @@ void WmsLoopFunctions::Reset() {
 
        CFootBotEntity& cFootBot = *any_cast<CFootBotEntity*>(it->second);
        WmsController& cController = dynamic_cast<WmsController&>(cFootBot.GetControllableEntity().GetController());
-       cController.pathPlanning.init(freeSpace);
+       cController.pathPlanning.init(freeSpace, cFootBot.GetEmbodiedEntity().GetOriginAnchor().Position);
        cController.reset();
     }
 
@@ -192,6 +194,21 @@ void WmsLoopFunctions::PreStep() {
 
       if((cPos - cController.pathPlanning.getGoals()[cController.pathPointNumber]).SquareLength() < m_fFoodSquareRadius) {
          cController.setCargoData(true);
+
+         if (cController.pathPointNumber == cController.pathPlanning.getPointsCount() - 1) {
+            loadedRobots++;
+            cController.setStop(true);
+         }
+
+         if (loadedRobots == m_cFootbots.size()){
+            std::chrono::microseconds elapsed = micros() - start;
+            std::cout << std::to_string(elapsed.count()) << std::endl;
+            std::cout << "Absolute time, mcs: " << start.count() << std::endl;
+            std::cout << "Absolute time, mcs: " << micros().count() << std::endl;
+            std::cout << "Absolute time, mcs: " << (micros().count() - start.count()) << std::endl;
+            std::cout << "Sim steps: " << GetSpace().GetSimulationClock() << std::endl;
+         }
+
          m_pcFloor->SetChanged();
          cController.pathPointNumber++;
       }

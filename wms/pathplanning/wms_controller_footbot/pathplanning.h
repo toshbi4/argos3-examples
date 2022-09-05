@@ -7,6 +7,7 @@
 #include <argos3/core/utility/math/range.h>
 #include <argos3/core/utility/math/rng.h>
 #include <argos3/core/utility/math/vector2.h>
+#include <argos3/core/utility/math/vector3.h>
 
 using namespace argos;
 
@@ -21,7 +22,7 @@ class PathPlanning {
 public:
 
    PathPlanning();
-   void init(std::vector<FreeRectangle> freeSpace);
+   void init(std::vector<FreeRectangle> freeSpace, CVector3 startPos);
    std::vector<CVector2> robotPath(std::vector<FreeRectangle> freeSpace);
    std::vector<CVector2> getGoals();
    uint16_t getPointsCount();
@@ -32,7 +33,7 @@ private:
    uint16_t pointsCount;
    CRandom::CRNG* m_pcRNG;
    std::vector<CVector2> m_cGoalsPos;
-
+   CVector3 startRobotPos;
 };
 
 #endif //PATHPLANNING_H

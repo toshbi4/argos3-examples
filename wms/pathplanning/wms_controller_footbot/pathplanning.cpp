@@ -10,8 +10,9 @@ PathPlanning::PathPlanning():
 
 }
 
-void PathPlanning::init(std::vector<FreeRectangle> freeSpace){
+void PathPlanning::init(std::vector<FreeRectangle> freeSpace, CVector3 startPos){
 
+   startRobotPos = startPos;
    /* Distribute uniformly the items in the environment */
    m_cGoalsPos = robotPath(freeSpace);
 }
@@ -27,12 +28,11 @@ std::vector<CVector2> PathPlanning::robotPath(std::vector<FreeRectangle> freeSpa
                                    m_pcRNG->Uniform(CRange(freeSpace[freeRectangleID].firstCoord.GetY(),
                                                            freeSpace[freeRectangleID].secondCoord.GetY()))));
 
-   oneRobotPath.insert(oneRobotPath.begin(), CVector2(m_pcRNG->Uniform(
-                                             CRange(freeSpace[freeSpace.size()-1].firstCoord.GetX(),
-                                                              freeSpace[freeSpace.size()-1].secondCoord.GetX())),
-                                             oneRobotPath[0].GetY()));
-    std::cout << freeRectangleID << std::endl;
-    std::cout << "GoalPos: " << oneRobotPath[0].GetX() << " " << oneRobotPath[0].GetY() << std::endl;
+   oneRobotPath.insert(oneRobotPath.begin(), CVector2(startRobotPos.GetX(), oneRobotPath[0].GetY()));
+   // oneRobotPath.insert(oneRobotPath.begin(), CVector2(4.0f, oneRobotPath[0].GetY()));
+
+   // std::cout << freeRectangleID << std::endl;
+   // std::cout << "GoalPos: " << oneRobotPath[0].GetX() << " " << oneRobotPath[0].GetY() << std::endl;
 
    return oneRobotPath;
 }

@@ -59,6 +59,9 @@ public:
    void setCargoData(bool val){
        hasCargo = val;
    }
+   void setStop(bool val){
+       stop = val;
+   }
 
    uint8_t pathPointNumber;
    PathPlanning pathPlanning;
@@ -74,6 +77,7 @@ private:
    CRandom::CRNG* m_pcRNG;
    SWheelTurningParams m_sWheelTurningParams;
    bool hasCargo;
+   bool stop;
    PID pid;
 };
 

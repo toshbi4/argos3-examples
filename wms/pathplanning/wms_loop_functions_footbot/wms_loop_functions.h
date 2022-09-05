@@ -50,6 +50,7 @@ private:
 
    std::vector<FreeRectangle> freeSpace;
    uint8_t borderIdNumber;
+   uint16_t loadedRobots;
 };
 
 #endif
