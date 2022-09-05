@@ -10,15 +10,11 @@ WmsLoopFunctions::WmsLoopFunctions() :
    m_cForagingArenaSideX(4.0f, 8.5f),
    m_cForagingArenaSideY(-6.5f, 6.5f),
    m_pcFloor(NULL),
-   pathPlanning{},
-   pointsCount{2},
    borderIdNumber{0}
 {
 }
 
 void WmsLoopFunctions::Init(TConfigurationNode& t_node) {
-
-   uint16_t robots_num = 0;
 
    try {
 
@@ -28,7 +24,6 @@ void WmsLoopFunctions::Init(TConfigurationNode& t_node) {
 
       CSpace::TMapPerType& m_cFootbots = GetSpace().GetEntitiesByType("foot-bot");
       std::cout << m_cFootbots.size() << std::endl;
-      robots_num = m_cFootbots.size();
 
       m_pcFloor = &GetSpace().GetFloorEntity();
 
@@ -38,7 +33,7 @@ void WmsLoopFunctions::Init(TConfigurationNode& t_node) {
    }
 
    createScene();
-   pathPlanning.init(robots_num, pointsCount, freeSpace);
+   Reset();
 }
 
 void WmsLoopFunctions::createScene(){
@@ -122,6 +117,7 @@ void WmsLoopFunctions::Reset() {
 
        CFootBotEntity& cFootBot = *any_cast<CFootBotEntity*>(it->second);
        WmsController& cController = dynamic_cast<WmsController&>(cFootBot.GetControllableEntity().GetController());
+       cController.pathPlanning.init(freeSpace);
        cController.reset();
     }
 
@@ -147,7 +143,7 @@ CColor WmsLoopFunctions::GetFloorColor(const CVector2& c_position_on_plane) {
       CFootBotEntity& cFootBot = *any_cast<CFootBotEntity*>(it->second);
       WmsController& cController = dynamic_cast<WmsController&>(cFootBot.GetControllableEntity().GetController());
 
-      if((c_position_on_plane - pathPlanning.getGoals()[robot_id][cController.pathPointNumber]).SquareLength() < m_fFoodSquareRadius) {
+      if((c_position_on_plane - cController.pathPlanning.getGoals()[cController.pathPointNumber]).SquareLength() < m_fFoodSquareRadius) {
          return CColor::BLACK;
       }
 
@@ -189,12 +185,12 @@ void WmsLoopFunctions::PreStep() {
       /* Get cargo data */
       bool hasCargo = cController.getCargoData();
 
-      if (cController.pathPointNumber <= pointsCount - 1) {
+      if (cController.pathPointNumber <= cController.pathPlanning.getPointsCount() - 1) {
          cController.setCargoData(false);
-         cController.setCoordinates(cPos, cOrient, pathPlanning.getGoals()[robot_id][cController.pathPointNumber]);
+         cController.setCoordinates(cPos, cOrient, cController.pathPlanning.getGoals()[cController.pathPointNumber]);
       }
 
-      if((cPos - pathPlanning.getGoals()[robot_id][cController.pathPointNumber]).SquareLength() < m_fFoodSquareRadius) {
+      if((cPos - cController.pathPlanning.getGoals()[cController.pathPointNumber]).SquareLength() < m_fFoodSquareRadius) {
          cController.setCargoData(true);
          m_pcFloor->SetChanged();
          cController.pathPointNumber++;

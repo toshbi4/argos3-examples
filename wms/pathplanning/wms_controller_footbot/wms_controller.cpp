@@ -20,6 +20,7 @@ void WmsController::SWheelTurningParams::Init(TConfigurationNode& t_node) {
 
 WmsController::WmsController() : 
    pathPointNumber(0),
+   pathPlanning{},
    speedVector {CVector2(0.0f, 0.0f)},
    m_pcWheels(NULL),
    m_pcRNG(NULL),
@@ -39,7 +40,6 @@ void WmsController::Init(TConfigurationNode& t_node) {
    }
 
    m_pcRNG = CRandom::CreateRNG("argos");
-   reset();
 }
 
 void WmsController::setCoordinates(CVector2& cPos, CQuaternion& cOrient, CVector2& cGoalPos){
@@ -69,7 +69,7 @@ void WmsController::setCoordinates(CVector2& cPos, CQuaternion& cOrient, CVector
    // std::cout << "cos(yaw) = " << cos_theta << std::endl;
    // std::cout << "sin(yaw) = " << sin_theta << std::endl;
    // std::cout << "localCoords: " << localVec(0) << " " << localVec(1) << std::endl;
-   // std::cout << "GoalPos: " << goalPos.GetX() << " " << goalPos.GetY() << std::endl;
+   // std::cout << "GoalPos: " << cGoalPos.GetX() << " " << cGoalPos.GetY() << std::endl;
 
    speedVector.Set(localVec(0), localVec(1));
 

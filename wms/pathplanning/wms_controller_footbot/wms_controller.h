@@ -6,6 +6,7 @@
 #include <argos3/core/utility/math/rng.h>
 #include <argos3/core/utility/math/vector2.h>
 #include <argos3/core/utility/math/quaternion.h>
+#include <wms/pathplanning/wms_controller_footbot/pathplanning.h>
 #include "wms/pathplanning/wms_controller_footbot/pid.h"
 
 using namespace argos;
@@ -60,6 +61,7 @@ public:
    }
 
    uint8_t pathPointNumber;
+   PathPlanning pathPlanning;
 
 private:
 

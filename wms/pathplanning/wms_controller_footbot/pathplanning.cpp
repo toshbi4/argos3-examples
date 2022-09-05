@@ -4,26 +4,23 @@
 
 PathPlanning::PathPlanning():
    var{0},
+   pointsCount{2},
    m_pcRNG(NULL)
 {
 
 }
 
-void PathPlanning::init(uint16_t robots_num, uint16_t pointsCount, std::vector<FreeRectangle> freeSpace){
+void PathPlanning::init(std::vector<FreeRectangle> freeSpace){
 
    /* Distribute uniformly the items in the environment */
-   for(UInt32 i = 0; i < robots_num; ++i) {
-
-      m_cGoalsPos.push_back(robotPath(i, freeSpace));
-
-   }
+   m_cGoalsPos = robotPath(freeSpace);
 }
 
-std::vector<CVector2> PathPlanning::robotPath(uint16_t robot_id, std::vector<FreeRectangle> freeSpace){
+std::vector<CVector2> PathPlanning::robotPath(std::vector<FreeRectangle> freeSpace){
 
    m_pcRNG = CRandom::CreateRNG("argos");
    std::vector<CVector2> oneRobotPath;
-   uint8_t freeRectangleID = /*rand() % freeSpace.size() - 1*/ robot_id;
+   uint8_t freeRectangleID = rand() % (freeSpace.size() - 1);
 
    oneRobotPath.push_back(CVector2(m_pcRNG->Uniform(CRange(freeSpace[freeRectangleID].firstCoord.GetX(),
                                                            freeSpace[freeRectangleID].secondCoord.GetX())),
@@ -34,10 +31,16 @@ std::vector<CVector2> PathPlanning::robotPath(uint16_t robot_id, std::vector<Fre
                                              CRange(freeSpace[freeSpace.size()-1].firstCoord.GetX(),
                                                               freeSpace[freeSpace.size()-1].secondCoord.GetX())),
                                              oneRobotPath[0].GetY()));
+    std::cout << freeRectangleID << std::endl;
+    std::cout << "GoalPos: " << oneRobotPath[0].GetX() << " " << oneRobotPath[0].GetY() << std::endl;
 
    return oneRobotPath;
 }
 
-std::vector<std::vector<CVector2>> PathPlanning::getGoals(){
+std::vector<CVector2> PathPlanning::getGoals(){
    return m_cGoalsPos;
+}
+
+uint16_t PathPlanning::getPointsCount(){
+   return pointsCount;
 }

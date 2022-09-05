@@ -8,7 +8,6 @@
 #include <argos3/core/utility/math/range.h>
 #include <argos3/core/utility/math/rng.h>
 #include <argos3/core/utility/math/vector2.h>
-#include <wms/pathplanning/wms_controller_footbot/pathplanning.h>
 
 using namespace argos;
 
@@ -47,8 +46,6 @@ private:
 //   std::string m_strOutput;
 //   std::ofstream m_cOutput;
 
-   PathPlanning pathPlanning;
-   uint16_t pointsCount;
    std::chrono::microseconds start;
 
    std::vector<FreeRectangle> freeSpace;
