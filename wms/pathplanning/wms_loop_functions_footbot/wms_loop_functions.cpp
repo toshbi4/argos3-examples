@@ -119,7 +119,7 @@ void WmsLoopFunctions::Reset() {
 
        CFootBotEntity& cFootBot = *any_cast<CFootBotEntity*>(it->second);
        WmsController& cController = dynamic_cast<WmsController&>(cFootBot.GetControllableEntity().GetController());
-       cController.pathPlanning.init(freeSpace, cFootBot.GetEmbodiedEntity().GetOriginAnchor().Position);
+       cController.pathPlanning.init(freeSpace, cFootBot.GetEmbodiedEntity().GetOriginAnchor().Position, cController.getCargoData());
        cController.reset();
     }
 
@@ -184,20 +184,24 @@ void WmsLoopFunctions::PreStep() {
               cFootBot.GetEmbodiedEntity().GetOriginAnchor().Position.GetY());
       cOrient = cFootBot.GetEmbodiedEntity().GetOriginAnchor().Orientation;
 
-      /* Get cargo data */
-      bool hasCargo = cController.getCargoData();
-
       if (cController.pathPointNumber <= cController.pathPlanning.getPointsCount() - 1) {
-         cController.setCargoData(false);
          cController.setCoordinates(cPos, cOrient, cController.pathPlanning.getGoals()[cController.pathPointNumber]);
       }
 
       if((cPos - cController.pathPlanning.getGoals()[cController.pathPointNumber]).SquareLength() < m_fFoodSquareRadius) {
-         cController.setCargoData(true);
 
          if (cController.pathPointNumber == cController.pathPlanning.getPointsCount() - 1) {
-            loadedRobots++;
+            cController.setCargoData(!cController.getCargoData());
             cController.setStop(true);
+
+            if (cController.pathPlanning.getRoutesCreated() < 3) {
+                cController.pathPlanning.init(freeSpace, cFootBot.GetEmbodiedEntity().GetOriginAnchor().Position, cController.getCargoData());
+                cController.setStop(false);
+                cController.pathPointNumber = -1;
+                m_pcFloor->SetChanged();
+            } else {
+                ++loadedRobots;
+            }
          }
 
          if (loadedRobots == m_cFootbots.size()){
@@ -210,9 +214,9 @@ void WmsLoopFunctions::PreStep() {
          }
 
          m_pcFloor->SetChanged();
+
          cController.pathPointNumber++;
       }
-
       robot_id += 1;
 
    }

@@ -24,7 +24,7 @@ WmsController::WmsController() :
    speedVector {CVector2(0.0f, 0.0f)},
    m_pcWheels(NULL),
    m_pcRNG(NULL),
-   hasCargo (0),
+   hasCargo (true),
    stop{false},
    pid {0.1, 100, -100, 1, 0.01, 0.5}
 {}
@@ -80,7 +80,7 @@ void WmsController::ControlStep() {
 
    CVector2 speed {0, 2.0};
 
-   if (hasCargo){
+   if (stop){
       SetWheelSpeedsFromLocalVector(CVector2(0.0f, 0.0f));
    } else {
       SetWheelSpeedsFromLocalVector(m_sWheelTurningParams.MaxSpeed * speedVector);
@@ -90,7 +90,7 @@ void WmsController::ControlStep() {
 void WmsController::reset() {
 
    pathPointNumber = 0;
-   hasCargo = 0;
+   hasCargo = true;
 
 }
 
