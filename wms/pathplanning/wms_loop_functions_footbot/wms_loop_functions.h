@@ -40,6 +40,7 @@ private:
    }
 
    Real m_fFoodSquareRadius;
+   uint8_t motionType; // 0 - perpendicular, 1 - diagonal
    CRange<Real> m_cForagingArenaSideX, m_cForagingArenaSideY;
    CFloorEntity* m_pcFloor;
 

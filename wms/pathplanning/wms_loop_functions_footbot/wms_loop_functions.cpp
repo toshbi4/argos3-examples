@@ -23,6 +23,8 @@ void WmsLoopFunctions::Init(TConfigurationNode& t_node) {
       GetNodeAttribute(tWorkspace, "radius", m_fFoodSquareRadius);
       m_fFoodSquareRadius *= m_fFoodSquareRadius;
 
+      GetNodeAttribute(tWorkspace, "motionType", motionType);
+
       CSpace::TMapPerType& m_cFootbots = GetSpace().GetEntitiesByType("foot-bot");
       std::cout << m_cFootbots.size() << std::endl;
 
@@ -34,6 +36,21 @@ void WmsLoopFunctions::Init(TConfigurationNode& t_node) {
    }
 
    createScene();
+
+   /* Check whether a robot is on a food item */
+   CSpace::TMapPerType& m_cFootbots = GetSpace().GetEntitiesByType("foot-bot");
+   for(CSpace::TMapPerType::iterator it = m_cFootbots.begin();
+   it != m_cFootbots.end();
+   ++it) {
+
+      /* Get handle to foot-bot entity and controller */
+      CFootBotEntity& cFootBot = *any_cast<CFootBotEntity*>(it->second);
+      WmsController& cController = dynamic_cast<WmsController&>(cFootBot.GetControllableEntity().GetController());
+
+      cController.setFreeSpace(&freeSpace);
+      cController.setParameters(m_fFoodSquareRadius, motionType);
+   }
+
    Reset();
 }
 
@@ -119,7 +136,7 @@ void WmsLoopFunctions::Reset() {
 
        CFootBotEntity& cFootBot = *any_cast<CFootBotEntity*>(it->second);
        WmsController& cController = dynamic_cast<WmsController&>(cFootBot.GetControllableEntity().GetController());
-       cController.pathPlanning.init(freeSpace, cFootBot.GetEmbodiedEntity().GetOriginAnchor().Position, cController.getCargoData());
+       cController.pathPlanning.init(freeSpace, cFootBot.GetEmbodiedEntity().GetOriginAnchor().Position, cController.getCargoData(), motionType);
        cController.reset();
     }
 
@@ -157,69 +174,7 @@ CColor WmsLoopFunctions::GetFloorColor(const CVector2& c_position_on_plane) {
 }
 
 void WmsLoopFunctions::PreStep() {
-   /* Logic to pick and drop food items */
-
-   if ((GetSpace().GetSimulationClock() > 0) && (start == mcs(0))){
-       start = micros();
-   }
-
-   /* Check whether a robot is on a food item */
-   CSpace::TMapPerType& m_cFootbots = GetSpace().GetEntitiesByType("foot-bot");
-
-   uint16_t robot_id = 0;
-   for(CSpace::TMapPerType::iterator it = m_cFootbots.begin();
-      it != m_cFootbots.end();
-      ++it) {
-
-      /* Get handle to foot-bot entity and controller */
-      CFootBotEntity& cFootBot = *any_cast<CFootBotEntity*>(it->second);
-      WmsController& cController = dynamic_cast<WmsController&>(cFootBot.GetControllableEntity().GetController());
-
-
-      /* Get the position of the foot-bot on the ground as a CVector2 */
-      CVector2 cPos;
-      CQuaternion cOrient;
-
-      cPos.Set(cFootBot.GetEmbodiedEntity().GetOriginAnchor().Position.GetX(),
-              cFootBot.GetEmbodiedEntity().GetOriginAnchor().Position.GetY());
-      cOrient = cFootBot.GetEmbodiedEntity().GetOriginAnchor().Orientation;
-
-      if (cController.pathPointNumber <= cController.pathPlanning.getPointsCount() - 1) {
-         cController.setCoordinates(cPos, cOrient, cController.pathPlanning.getGoals()[cController.pathPointNumber]);
-      }
-
-      if((cPos - cController.pathPlanning.getGoals()[cController.pathPointNumber]).SquareLength() < m_fFoodSquareRadius) {
-
-         if (cController.pathPointNumber == cController.pathPlanning.getPointsCount() - 1) {
-            cController.setCargoData(!cController.getCargoData());
-            cController.setStop(true);
-
-            if (cController.pathPlanning.getRoutesCreated() < 3) {
-                cController.pathPlanning.init(freeSpace, cFootBot.GetEmbodiedEntity().GetOriginAnchor().Position, cController.getCargoData());
-                cController.setStop(false);
-                cController.pathPointNumber = -1;
-                m_pcFloor->SetChanged();
-            } else {
-                ++loadedRobots;
-            }
-         }
-
-         if (loadedRobots == m_cFootbots.size()){
-            std::chrono::microseconds elapsed = micros() - start;
-            std::cout << std::to_string(elapsed.count()) << std::endl;
-            std::cout << "Absolute time, mcs: " << start.count() << std::endl;
-            std::cout << "Absolute time, mcs: " << micros().count() << std::endl;
-            std::cout << "Absolute time, mcs: " << (micros().count() - start.count()) << std::endl;
-            std::cout << "Sim steps: " << GetSpace().GetSimulationClock() << std::endl;
-         }
-
-         m_pcFloor->SetChanged();
-
-         cController.pathPointNumber++;
-      }
-      robot_id += 1;
-
-   }
+   return;
 }
 
 REGISTER_LOOP_FUNCTIONS(WmsLoopFunctions, "wms_loop_functions")

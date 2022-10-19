@@ -23,6 +23,7 @@ WmsController::WmsController() :
    pathPlanning{},
    speedVector {CVector2(0.0f, 0.0f)},
    m_pcWheels(NULL),
+   m_pcPosSens(NULL),
    m_pcRNG(NULL),
    hasCargo (true),
    stop{false},
@@ -34,6 +35,7 @@ void WmsController::Init(TConfigurationNode& t_node) {
    try {
       m_pcWheels    = GetActuator<CCI_DifferentialSteeringActuator>("differential_steering");
       m_sWheelTurningParams.Init(GetNode(t_node, "wheel_turning"));
+      m_pcPosSens = GetSensor<CCI_PositioningSensor>("positioning");
    }
    catch(CARGoSException& ex) {
       THROW_ARGOSEXCEPTION_NESTED("Error initializing the foot-bot foraging controller for robot \""
@@ -43,7 +45,10 @@ void WmsController::Init(TConfigurationNode& t_node) {
    m_pcRNG = CRandom::CreateRNG("argos");
 }
 
-void WmsController::setCoordinates(CVector2& cPos, CQuaternion& cOrient, CVector2& cGoalPos){
+void WmsController::setCoordinates(CVector2& cGoalPos){
+
+   CVector3 cPos = m_pcPosSens->GetReading().Position;
+   CQuaternion cOrient = m_pcPosSens->GetReading().Orientation;
 
    // yaw (z-axis rotation)
    double siny_cosp = 2 * (cOrient.GetW() * cOrient.GetZ() + cOrient.GetX() * cOrient.GetY());
@@ -85,6 +90,65 @@ void WmsController::ControlStep() {
    } else {
       SetWheelSpeedsFromLocalVector(m_sWheelTurningParams.MaxSpeed * speedVector);
    }
+
+
+
+
+//      if ((GetSpace().GetSimulationClock() > 0) && (start == mcs(0))){
+//          start = micros();
+//      }
+
+      /* Check whether a robot is on a food item */
+//      CSpace::TMapPerType& m_cFootbots = GetSpace().GetEntitiesByType("foot-bot");
+
+//      uint16_t robot_id = 0;
+//      for(CSpace::TMapPerType::iterator it = m_cFootbots.begin();
+//         it != m_cFootbots.end();
+//         ++it) {
+
+         /* Get handle to foot-bot entity and controller */
+//         CFootBotEntity& cFootBot = *any_cast<CFootBotEntity*>(it->second);
+//         WmsController& cController = dynamic_cast<WmsController&>(cFootBot.GetControllableEntity().GetController());
+
+
+   CVector2 cPos = CVector2(m_pcPosSens->GetReading().Position.GetX(),
+                            m_pcPosSens->GetReading().Position.GetY());
+   CQuaternion cOrient = m_pcPosSens->GetReading().Orientation;
+
+         if (pathPointNumber <= pathPlanning.getPointsCount() - 1) {
+            setCoordinates(pathPlanning.getGoals()[pathPointNumber]);
+         }
+
+         if((cPos - pathPlanning.getGoals()[pathPointNumber]).SquareLength() < m_fFoodSquareRadius) {
+
+            if (pathPointNumber == pathPlanning.getPointsCount() - 1) {
+               setCargoData(!getCargoData());
+               setStop(true);
+
+               if (pathPlanning.getRoutesCreated() < 3) {
+                   pathPlanning.init(*freeSpace, m_pcPosSens->GetReading().Position, getCargoData(), motionType);
+                   setStop(false);
+                   pathPointNumber = -1;
+                   //m_pcFloor->SetChanged();
+               } //else {
+                   //++loadedRobots;
+               //}
+            }
+
+//            if (loadedRobots == m_cFootbots.size()){
+//               std::chrono::microseconds elapsed = micros() - start;
+//               std::cout << std::to_string(elapsed.count()) << std::endl;
+//               std::cout << "Absolute time, mcs: " << start.count() << std::endl;
+//               std::cout << "Absolute time, mcs: " << micros().count() << std::endl;
+//               std::cout << "Absolute time, mcs: " << (micros().count() - start.count()) << std::endl;
+//               std::cout << "Sim steps: " << GetSpace().GetSimulationClock() << std::endl;
+//            }
+
+            //m_pcFloor->SetChanged();
+
+            pathPointNumber++;
+         }
+
 }
 
 void WmsController::reset() {

@@ -22,8 +22,13 @@ class PathPlanning {
 public:
 
    PathPlanning();
-   void init(std::vector<FreeRectangle> freeSpace, CVector3 startPos, bool aHasCargo);
-   std::vector<CVector2> robotPath(std::vector<FreeRectangle> freeSpace, bool aHasCargo);
+   void init(std::vector<FreeRectangle> freeSpace,
+             CVector3 startPos,
+             bool aHasCargo,
+             uint8_t aMotionType);
+   std::vector<CVector2> robotPath(std::vector<FreeRectangle> freeSpace,
+                                   bool aHasCargo,
+                                   uint8_t aMotionType);
    std::vector<CVector2> getGoals();
    uint16_t getPointsCount();
 
