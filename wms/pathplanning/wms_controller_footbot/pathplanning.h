@@ -26,6 +26,10 @@ public:
              CVector3 startPos,
              bool aHasCargo,
              uint8_t aMotionType);
+   void test(std::vector<FreeRectangle> freeSpace,
+             CVector3 startPos,
+             bool aHasCargo,
+             uint8_t aMotionType);
    std::vector<CVector2> robotPath(std::vector<FreeRectangle> freeSpace,
                                    bool aHasCargo,
                                    uint8_t aMotionType);

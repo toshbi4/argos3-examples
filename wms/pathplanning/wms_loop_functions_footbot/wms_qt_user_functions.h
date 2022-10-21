@@ -6,6 +6,8 @@
 
 using namespace argos;
 
+class WmsLoopFunctions;
+
 class WmsQTUserFunctions : public CQTOpenGLUserFunctions {
 
 public:
@@ -15,6 +17,12 @@ public:
    virtual ~WmsQTUserFunctions() {}
 
    void Draw(CFootBotEntity& c_entity);
+   virtual void DrawInWorld();
+
+private:
+
+   void DrawWaypoints(const std::vector<CVector3>& c_waypoints);
+   WmsLoopFunctions& m_cTrajLF;
    
 };
 

@@ -62,7 +62,7 @@ public:
    void setStop(bool val){
       stop = val;
    }
-   void setFreeSpace(std::vector<FreeRectangle> *aFreeSpace){
+   void setFreeSpace(std::vector<FreeRectangle> aFreeSpace){
       freeSpace = aFreeSpace;
    }
    void setParameters(Real aRadius, uint8_t aMotionType){
@@ -70,8 +70,14 @@ public:
        motionType = aMotionType;
    }
 
+   void updateGoals(){
+      pathPlanning.init(freeSpace, m_pcPosSens->GetReading().Position, getCargoData(), motionType);
+   };
+
    uint8_t pathPointNumber;
    PathPlanning pathPlanning;
+   bool stop;
+   bool changeFloor;
 
 private:
 
@@ -89,9 +95,8 @@ private:
    Real m_fFoodSquareRadius;
    uint8_t motionType; // 0 - perpendicular, 1 - diagonal
 
-   std::vector<FreeRectangle> *freeSpace;
+   std::vector<FreeRectangle> freeSpace;
    bool hasCargo;
-   bool stop;
    PID pid;
 };
 

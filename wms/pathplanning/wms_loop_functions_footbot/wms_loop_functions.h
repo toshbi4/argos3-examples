@@ -26,6 +26,12 @@ public:
    virtual CColor GetFloorColor(const CVector2& c_position_on_plane);
    virtual void PreStep();
 
+   typedef std::map<CFootBotEntity*, std::vector<CVector3> > TWaypointMap;
+   TWaypointMap m_tWaypoints;
+   inline const TWaypointMap& GetWaypoints() const {
+      return m_tWaypoints;
+   }
+
 private:
 
    void createScene();

@@ -6,6 +6,16 @@
 #include <wms/pathplanning/wms_controller_footbot/wms_controller.h>
 #include "wms_loop_functions.h"
 
+/*
+ * To reduce the number of waypoints stored in memory,
+ * consider two robot positions distinct if they are
+ * at least MIN_DISTANCE away from each other
+ * This constant is expressed in meters
+ */
+static const Real MIN_DISTANCE = 0.05f;
+/* Convenience constant to avoid calculating the square root in PostStep() */
+static const Real MIN_DISTANCE_SQUARED = MIN_DISTANCE * MIN_DISTANCE;
+
 WmsLoopFunctions::WmsLoopFunctions() :
    m_cForagingArenaSideX(4.0f, 8.5f),
    m_cForagingArenaSideY(-6.5f, 6.5f),
@@ -47,7 +57,14 @@ void WmsLoopFunctions::Init(TConfigurationNode& t_node) {
       CFootBotEntity& cFootBot = *any_cast<CFootBotEntity*>(it->second);
       WmsController& cController = dynamic_cast<WmsController&>(cFootBot.GetControllableEntity().GetController());
 
-      cController.setFreeSpace(&freeSpace);
+      /* Create a waypoint vector */
+      m_tWaypoints[&cFootBot] = std::vector<CVector3>();
+      /* Add the initial position of the foot-bot */
+      m_tWaypoints[&cFootBot].push_back(CVector3(cFootBot.GetEmbodiedEntity().GetOriginAnchor().Position.GetX(),
+                                                 cFootBot.GetEmbodiedEntity().GetOriginAnchor().Position.GetY(),
+                                                 0.1f));
+
+      cController.setFreeSpace(freeSpace);
       cController.setParameters(m_fFoodSquareRadius, motionType);
    }
 
@@ -128,7 +145,6 @@ void WmsLoopFunctions::createBorder(CVector2 firstCoordinate, CVector2 secondCoo
 
 void WmsLoopFunctions::Reset() {
 
-
     CSpace::TMapPerType& m_cFootbots = GetSpace().GetEntitiesByType("foot-bot");
     for(CSpace::TMapPerType::iterator it = m_cFootbots.begin();
        it != m_cFootbots.end();
@@ -136,8 +152,9 @@ void WmsLoopFunctions::Reset() {
 
        CFootBotEntity& cFootBot = *any_cast<CFootBotEntity*>(it->second);
        WmsController& cController = dynamic_cast<WmsController&>(cFootBot.GetControllableEntity().GetController());
-       cController.pathPlanning.init(freeSpace, cFootBot.GetEmbodiedEntity().GetOriginAnchor().Position, cController.getCargoData(), motionType);
-       cController.reset();
+       cController.updateGoals();
+       //cController.pathPlanning.init(freeSpace, cFootBot.GetEmbodiedEntity().GetOriginAnchor().Position, cController.getCargoData(), motionType);
+       //cController.reset();
     }
 
     m_pcFloor->SetChanged();
@@ -174,7 +191,27 @@ CColor WmsLoopFunctions::GetFloorColor(const CVector2& c_position_on_plane) {
 }
 
 void WmsLoopFunctions::PreStep() {
-   return;
+   CSpace::TMapPerType& m_cFootbots = GetSpace().GetEntitiesByType("foot-bot");
+   for(CSpace::TMapPerType::iterator it = m_cFootbots.begin();
+      it != m_cFootbots.end();
+      ++it) {
+
+      CFootBotEntity& cFootBot = *any_cast<CFootBotEntity*>(it->second);
+      WmsController& cController = dynamic_cast<WmsController&>(cFootBot.GetControllableEntity().GetController());
+      if (cController.changeFloor){
+         cController.changeFloor = false;
+         //m_pcFloor->SetChanged();
+      }
+
+      /* Add the current position of the foot-bot if it's sufficiently far from the last */
+      if(SquareDistance(cFootBot.GetEmbodiedEntity().GetOriginAnchor().Position,
+                        m_tWaypoints[&cFootBot].back()) > MIN_DISTANCE_SQUARED) {
+         m_tWaypoints[&cFootBot].push_back(CVector3(cFootBot.GetEmbodiedEntity().GetOriginAnchor().Position.GetX(),
+                                                    cFootBot.GetEmbodiedEntity().GetOriginAnchor().Position.GetY(),
+                                                    0.1f));
+      }
+
+   }
 }
 
 REGISTER_LOOP_FUNCTIONS(WmsLoopFunctions, "wms_loop_functions")

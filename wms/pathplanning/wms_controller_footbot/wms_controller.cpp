@@ -21,12 +21,13 @@ void WmsController::SWheelTurningParams::Init(TConfigurationNode& t_node) {
 WmsController::WmsController() : 
    pathPointNumber(0),
    pathPlanning{},
+   stop{false},
+   changeFloor {false},
    speedVector {CVector2(0.0f, 0.0f)},
    m_pcWheels(NULL),
    m_pcPosSens(NULL),
    m_pcRNG(NULL),
    hasCargo (true),
-   stop{false},
    pid {0.1, 100, -100, 1, 0.01, 0.5}
 {}
 
@@ -91,9 +92,6 @@ void WmsController::ControlStep() {
       SetWheelSpeedsFromLocalVector(m_sWheelTurningParams.MaxSpeed * speedVector);
    }
 
-
-
-
 //      if ((GetSpace().GetSimulationClock() > 0) && (start == mcs(0))){
 //          start = micros();
 //      }
@@ -115,25 +113,29 @@ void WmsController::ControlStep() {
                             m_pcPosSens->GetReading().Position.GetY());
    CQuaternion cOrient = m_pcPosSens->GetReading().Orientation;
 
-         if (pathPointNumber <= pathPlanning.getPointsCount() - 1) {
-            setCoordinates(pathPlanning.getGoals()[pathPointNumber]);
+
+   if (pathPointNumber <= pathPlanning.getPointsCount() - 1) {
+      setCoordinates(pathPlanning.getGoals()[pathPointNumber]);
+   }
+
+   if((cPos - pathPlanning.getGoals()[pathPointNumber]).SquareLength() < m_fFoodSquareRadius) {
+
+      if (pathPointNumber == pathPlanning.getPointsCount() - 1) {
+         setCargoData(!getCargoData());
+         // setStop(true);
+         if (!changeFloor){
+            changeFloor = true;
          }
 
-         if((cPos - pathPlanning.getGoals()[pathPointNumber]).SquareLength() < m_fFoodSquareRadius) {
-
-            if (pathPointNumber == pathPlanning.getPointsCount() - 1) {
-               setCargoData(!getCargoData());
-               setStop(true);
-
-               if (pathPlanning.getRoutesCreated() < 3) {
-                   pathPlanning.init(*freeSpace, m_pcPosSens->GetReading().Position, getCargoData(), motionType);
-                   setStop(false);
-                   pathPointNumber = -1;
-                   //m_pcFloor->SetChanged();
-               } //else {
-                   //++loadedRobots;
-               //}
-            }
+      if (pathPlanning.getRoutesCreated() < 3) {
+         updateGoals();
+         setStop(false);
+         pathPointNumber = -1;
+      } else {
+         setStop(true);
+         //++loadedRobots;
+       }
+      }
 
 //            if (loadedRobots == m_cFootbots.size()){
 //               std::chrono::microseconds elapsed = micros() - start;
@@ -144,10 +146,8 @@ void WmsController::ControlStep() {
 //               std::cout << "Sim steps: " << GetSpace().GetSimulationClock() << std::endl;
 //            }
 
-            //m_pcFloor->SetChanged();
-
-            pathPointNumber++;
-         }
+      pathPointNumber++;
+   }
 
 }
 

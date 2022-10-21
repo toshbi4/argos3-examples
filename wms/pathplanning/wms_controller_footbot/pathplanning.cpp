@@ -11,15 +11,25 @@ PathPlanning::PathPlanning():
 
 }
 
-void PathPlanning::init(std::vector<FreeRectangle> freeSpace,
+void PathPlanning::init(std::vector<FreeRectangle> aFreeSpace,
                         CVector3 startPos,
                         bool aHasCargo,
                         uint8_t aMotionType){
 
    startRobotPos = startPos;
    /* Distribute uniformly the items in the environment */
-   m_cGoalsPos = robotPath(freeSpace, aHasCargo, aMotionType);
-   ++routesCreated;
+   m_cGoalsPos = robotPath(aFreeSpace, aHasCargo, aMotionType);
+}
+
+void PathPlanning::test(std::vector<FreeRectangle> aFreeSpace,
+                        CVector3 startPos,
+                        bool aHasCargo,
+                        uint8_t aMotionType){
+
+   startRobotPos = startPos;
+   /* Distribute uniformly the items in the environment */
+
+   m_cGoalsPos = robotPath(aFreeSpace, aHasCargo, aMotionType);
 }
 
 std::vector<CVector2> PathPlanning::robotPath(std::vector<FreeRectangle> freeSpace,
@@ -30,6 +40,9 @@ std::vector<CVector2> PathPlanning::robotPath(std::vector<FreeRectangle> freeSpa
    std::vector<CVector2> oneRobotPath;
 
    if (aHasCargo){
+
+      ++routesCreated;
+
       uint8_t freeRectangleID = rand() % (freeSpace.size() - 1);
       oneRobotPath.push_back(CVector2(m_pcRNG->Uniform(CRange(freeSpace[freeRectangleID].firstCoord.GetX(),
                                                               freeSpace[freeRectangleID].secondCoord.GetX())),
@@ -45,6 +58,10 @@ std::vector<CVector2> PathPlanning::robotPath(std::vector<FreeRectangle> freeSpa
       }
    } else {
        uint8_t freeRectangleID = freeSpace.size() - 1;
+       oneRobotPath.push_back(CVector2(m_pcRNG->Uniform(CRange(freeSpace[freeRectangleID].firstCoord.GetX(),
+                                                               freeSpace[freeRectangleID].secondCoord.GetX())),
+                                       m_pcRNG->Uniform(CRange(freeSpace[freeRectangleID].firstCoord.GetY(),
+                                                               freeSpace[freeRectangleID].secondCoord.GetY()))));
 
        if (aMotionType == 1){ // diagonal
           oneRobotPath.insert(oneRobotPath.begin(), CVector2(4.2f, startRobotPos.GetY()));
@@ -54,7 +71,6 @@ std::vector<CVector2> PathPlanning::robotPath(std::vector<FreeRectangle> freeSpa
           pointsCount = 2;
        }
    }
-
 
    // std::cout << freeRectangleID << std::endl;
    // std::cout << "GoalPos: " << oneRobotPath[0].GetX() << " " << oneRobotPath[0].GetY() << std::endl;
