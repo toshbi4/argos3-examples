@@ -18,7 +18,7 @@ public:
    using mcs = std::chrono::microseconds;
 
    WmsLoopFunctions();
-   virtual ~WmsLoopFunctions() {}
+   ~WmsLoopFunctions();
 
    virtual void Init(TConfigurationNode& t_tree);
    virtual void Reset();
@@ -50,14 +50,15 @@ private:
    CRange<Real> m_cForagingArenaSideX, m_cForagingArenaSideY;
    CFloorEntity* m_pcFloor;
 
-//   std::string m_strOutput;
-//   std::ofstream m_cOutput;
-
    std::chrono::microseconds start;
 
    std::vector<FreeRectangle> freeSpace;
    uint8_t borderIdNumber;
    uint16_t loadedRobots;
+   std::vector<CVector2> loadPoints;
+   std::vector<CVector2> unloadPoints;
+   bool goalsPredefined;
+   uint16_t taskNumber;
 };
 
 #endif

@@ -21,8 +21,24 @@ WmsLoopFunctions::WmsLoopFunctions() :
    m_cForagingArenaSideY(-6.5f, 6.5f),
    m_pcFloor(NULL),
    borderIdNumber{0},
-   loadedRobots{0}
+   loadedRobots{0},
+   goalsPredefined{false},
+   taskNumber{0}
 {
+}
+
+WmsLoopFunctions::~WmsLoopFunctions(){
+   if (!goalsPredefined){
+      std::ofstream out;
+      out.open("./goals.txt");
+      if (out.is_open())
+      {
+         for(int i=0; i < loadPoints.size(); i++){
+            out << loadPoints[i].GetX() << " " << loadPoints[i].GetY();
+            out << " " << unloadPoints[i].GetX() << " " << unloadPoints[i].GetY() << std::endl;
+         }
+      }
+   }
 }
 
 void WmsLoopFunctions::Init(TConfigurationNode& t_node) {
@@ -44,6 +60,33 @@ void WmsLoopFunctions::Init(TConfigurationNode& t_node) {
    catch(CARGoSException& ex) {
      THROW_ARGOSEXCEPTION_NESTED("Error parsing loop functions!", ex);
    }
+
+   /* Check file with predefined points */
+   std::string line;
+   std::ifstream in("./goals.txt"); // open file
+
+   if (in.is_open())
+   {
+      std::cout << "Goals predefined" << std::endl;
+      goalsPredefined = true;
+      while (getline(in, line))
+      {
+          // std::cout << line << std::endl;
+
+          std::istringstream in(line); // make a stream for the line itself
+
+          float x_load, y_load, x_unload, y_unload;
+          in >> x_load >> y_load >> x_unload >> y_unload; // now read the whitespace-separated floats
+
+          loadPoints.push_back(CVector2(x_load, y_load));
+          unloadPoints.push_back(CVector2(x_unload, y_unload));
+          std::cout << loadPoints[loadPoints.size()-1].GetX() << " " << loadPoints[loadPoints.size()-1].GetY() << std::endl;
+      }
+   } else {
+      std::cout << "Goals are not predefined" << std::endl;
+      goalsPredefined = false;
+   }
+   in.close();
 
    createScene();
 
@@ -72,7 +115,7 @@ void WmsLoopFunctions::Init(TConfigurationNode& t_node) {
 }
 
 void WmsLoopFunctions::createScene(){
-    //Create obstacles and set a free place
+    // Create obstacles and set a free place
     createBorder(CVector2(-9.1f, -6.0f), CVector2(-9.0f, 6.0f));
 
     createBorder(CVector2(-9.0f, 6.0f), CVector2(4.0f, 6.1f));
@@ -152,9 +195,21 @@ void WmsLoopFunctions::Reset() {
 
        CFootBotEntity& cFootBot = *any_cast<CFootBotEntity*>(it->second);
        WmsController& cController = dynamic_cast<WmsController&>(cFootBot.GetControllableEntity().GetController());
-       cController.updateGoals();
-       //cController.pathPlanning.init(freeSpace, cFootBot.GetEmbodiedEntity().GetOriginAnchor().Position, cController.getCargoData(), motionType);
-       //cController.reset();
+       if (goalsPredefined){
+          cController.pathPlanning.init(freeSpace,
+                                        cFootBot.GetEmbodiedEntity().GetOriginAnchor().Position,
+                                        cController.getCargoData(),
+                                        motionType,
+                                        &loadPoints[taskNumber],
+                                        &unloadPoints[taskNumber]);
+          ++taskNumber;
+       } else {
+          cController.pathPlanning.init(freeSpace,
+                                        cFootBot.GetEmbodiedEntity().GetOriginAnchor().Position,
+                                        cController.getCargoData(),
+                                        motionType);
+       }
+       cController.isWaitingNewTask = false;
     }
 
     m_pcFloor->SetChanged();
@@ -179,7 +234,7 @@ CColor WmsLoopFunctions::GetFloorColor(const CVector2& c_position_on_plane) {
       CFootBotEntity& cFootBot = *any_cast<CFootBotEntity*>(it->second);
       WmsController& cController = dynamic_cast<WmsController&>(cFootBot.GetControllableEntity().GetController());
 
-      if((c_position_on_plane - cController.pathPlanning.getGoals()[cController.pathPointNumber]).SquareLength() < m_fFoodSquareRadius) {
+      if((c_position_on_plane - cController.pathPlanning.getGoals()[cController.pathPointNumber].coords).SquareLength() < m_fFoodSquareRadius) {
          return CColor::BLACK;
       }
 
@@ -199,8 +254,26 @@ void WmsLoopFunctions::PreStep() {
       CFootBotEntity& cFootBot = *any_cast<CFootBotEntity*>(it->second);
       WmsController& cController = dynamic_cast<WmsController&>(cFootBot.GetControllableEntity().GetController());
       if (cController.changeFloor){
+         m_pcFloor->SetChanged();
          cController.changeFloor = false;
-         //m_pcFloor->SetChanged();
+      }
+
+      if (cController.isWaitingNewTask){
+         if (goalsPredefined){
+            cController.pathPlanning.init(freeSpace,
+                                          cFootBot.GetEmbodiedEntity().GetOriginAnchor().Position,
+                                          cController.getCargoData(),
+                                          motionType,
+                                          &loadPoints[taskNumber],
+                                          &unloadPoints[taskNumber]);
+            ++taskNumber;
+         } else {
+            cController.pathPlanning.init(freeSpace,
+                                          cFootBot.GetEmbodiedEntity().GetOriginAnchor().Position,
+                                          cController.getCargoData(),
+                                          motionType);
+         }
+         cController.isWaitingNewTask = false;
       }
 
       /* Add the current position of the foot-bot if it's sufficiently far from the last */

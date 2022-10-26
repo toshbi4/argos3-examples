@@ -22,12 +22,13 @@ WmsController::WmsController() :
    pathPointNumber(0),
    pathPlanning{},
    stop{false},
+   isWaitingNewTask{true},
    changeFloor {false},
    speedVector {CVector2(0.0f, 0.0f)},
    m_pcWheels(NULL),
    m_pcPosSens(NULL),
    m_pcRNG(NULL),
-   hasCargo (true),
+   hasCargo (false),
    pid {0.1, 100, -100, 1, 0.01, 0.5}
 {}
 
@@ -86,6 +87,11 @@ void WmsController::ControlStep() {
 
    CVector2 speed {0, 2.0};
 
+   if (isWaitingNewTask){
+      SetWheelSpeedsFromLocalVector(CVector2(0.0f, 0.0f));
+      return;
+   }
+
    if (stop){
       SetWheelSpeedsFromLocalVector(CVector2(0.0f, 0.0f));
    } else {
@@ -96,45 +102,39 @@ void WmsController::ControlStep() {
 //          start = micros();
 //      }
 
-      /* Check whether a robot is on a food item */
-//      CSpace::TMapPerType& m_cFootbots = GetSpace().GetEntitiesByType("foot-bot");
-
-//      uint16_t robot_id = 0;
-//      for(CSpace::TMapPerType::iterator it = m_cFootbots.begin();
-//         it != m_cFootbots.end();
-//         ++it) {
-
-         /* Get handle to foot-bot entity and controller */
-//         CFootBotEntity& cFootBot = *any_cast<CFootBotEntity*>(it->second);
-//         WmsController& cController = dynamic_cast<WmsController&>(cFootBot.GetControllableEntity().GetController());
-
-
    CVector2 cPos = CVector2(m_pcPosSens->GetReading().Position.GetX(),
                             m_pcPosSens->GetReading().Position.GetY());
    CQuaternion cOrient = m_pcPosSens->GetReading().Orientation;
 
 
    if (pathPointNumber <= pathPlanning.getPointsCount() - 1) {
-      setCoordinates(pathPlanning.getGoals()[pathPointNumber]);
+      setCoordinates(pathPlanning.getGoals()[pathPointNumber].coords);
    }
 
-   if((cPos - pathPlanning.getGoals()[pathPointNumber]).SquareLength() < m_fFoodSquareRadius) {
+   if((cPos - pathPlanning.getGoals()[pathPointNumber].coords).SquareLength() < m_fFoodSquareRadius) {
+
+      if (!changeFloor){
+         changeFloor = true;
+      }
+
+      if (pathPlanning.getGoals()[pathPointNumber].type == 1){
+         setCargoData(true);
+      } else if (pathPlanning.getGoals()[pathPointNumber].type == 2){
+         setCargoData(false);
+      }
 
       if (pathPointNumber == pathPlanning.getPointsCount() - 1) {
-         setCargoData(!getCargoData());
-         // setStop(true);
-         if (!changeFloor){
-            changeFloor = true;
+         if (pathPlanning.getRoutesCreated() < 3) {
+            if (!hasCargo){
+               //updateGoals();
+               //setStop(false);
+               isWaitingNewTask = true;
+               pathPointNumber = -1;
+            }
+         } else {
+            setStop(true);
+            //++loadedRobots;
          }
-
-      if (pathPlanning.getRoutesCreated() < 3) {
-         updateGoals();
-         setStop(false);
-         pathPointNumber = -1;
-      } else {
-         setStop(true);
-         //++loadedRobots;
-       }
       }
 
 //            if (loadedRobots == m_cFootbots.size()){

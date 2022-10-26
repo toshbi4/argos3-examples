@@ -77,6 +77,7 @@ public:
    uint8_t pathPointNumber;
    PathPlanning pathPlanning;
    bool stop;
+   bool isWaitingNewTask;
    bool changeFloor;
 
 private:

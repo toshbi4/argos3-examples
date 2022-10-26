@@ -14,71 +14,73 @@ PathPlanning::PathPlanning():
 void PathPlanning::init(std::vector<FreeRectangle> aFreeSpace,
                         CVector3 startPos,
                         bool aHasCargo,
-                        uint8_t aMotionType){
+                        uint8_t aMotionType,
+                        CVector2 *aLoadCoords,
+                        CVector2 *aUnloadCoords){
 
    startRobotPos = startPos;
    /* Distribute uniformly the items in the environment */
-   m_cGoalsPos = robotPath(aFreeSpace, aHasCargo, aMotionType);
+   m_cGoalsPos = robotPath(aFreeSpace, aHasCargo, aMotionType, aLoadCoords, aUnloadCoords);
 }
 
-void PathPlanning::test(std::vector<FreeRectangle> aFreeSpace,
-                        CVector3 startPos,
-                        bool aHasCargo,
-                        uint8_t aMotionType){
-
-   startRobotPos = startPos;
-   /* Distribute uniformly the items in the environment */
-
-   m_cGoalsPos = robotPath(aFreeSpace, aHasCargo, aMotionType);
-}
-
-std::vector<CVector2> PathPlanning::robotPath(std::vector<FreeRectangle> freeSpace,
-                                              bool aHasCargo,
-                                              uint8_t aMotionType){
+std::vector<PathPlanning::RoutePoint> PathPlanning::robotPath(std::vector<FreeRectangle> freeSpace,
+                                                              bool aHasCargo,
+                                                              uint8_t aMotionType,
+                                                              CVector2 *aLoadCoords,
+                                                              CVector2 *aUnloadCoords){
 
    m_pcRNG = CRandom::CreateRNG("argos");
-   std::vector<CVector2> oneRobotPath;
+   std::vector<RoutePoint> oneRobotPath;
+   CVector2 loadCoords;
+   CVector2 unloadCoords;
 
-   if (aHasCargo){
+   ++routesCreated;
 
-      ++routesCreated;
+   if (aLoadCoords == nullptr){
 
-      uint8_t freeRectangleID = rand() % (freeSpace.size() - 1);
-      oneRobotPath.push_back(CVector2(m_pcRNG->Uniform(CRange(freeSpace[freeRectangleID].firstCoord.GetX(),
-                                                              freeSpace[freeRectangleID].secondCoord.GetX())),
-                                      m_pcRNG->Uniform(CRange(freeSpace[freeRectangleID].firstCoord.GetY(),
-                                                              freeSpace[freeRectangleID].secondCoord.GetY()))));
-      if (aMotionType == 1){ // diagonal
-         oneRobotPath.insert(oneRobotPath.begin(), CVector2(4.0f, oneRobotPath[0].GetY()));
-         pointsCount = 2;
-      } else { // perpendicular
-         oneRobotPath.insert(oneRobotPath.begin(), CVector2(4.0f, oneRobotPath[0].GetY()));
-         oneRobotPath.insert(oneRobotPath.begin(), CVector2(startRobotPos.GetX(), oneRobotPath[0].GetY()));
-         pointsCount = 3;
-      }
+      uint8_t freeRectangleID = freeSpace.size() - 1;
+      loadCoords = CVector2(m_pcRNG->Uniform(CRange(freeSpace[freeRectangleID].firstCoord.GetX(),
+                                                    freeSpace[freeRectangleID].secondCoord.GetX())),
+                            m_pcRNG->Uniform(CRange(freeSpace[freeRectangleID].firstCoord.GetY(),
+                                                    freeSpace[freeRectangleID].secondCoord.GetY())));
+      freeRectangleID = rand() % (freeSpace.size() - 1);
+      unloadCoords = CVector2(m_pcRNG->Uniform(CRange(freeSpace[freeRectangleID].firstCoord.GetX(),
+                                                      freeSpace[freeRectangleID].secondCoord.GetX())),
+                              m_pcRNG->Uniform(CRange(freeSpace[freeRectangleID].firstCoord.GetY(),
+                                                      freeSpace[freeRectangleID].secondCoord.GetY())));
+      std::cout << "Random goals." << std::endl;
+
    } else {
-       uint8_t freeRectangleID = freeSpace.size() - 1;
-       oneRobotPath.push_back(CVector2(m_pcRNG->Uniform(CRange(freeSpace[freeRectangleID].firstCoord.GetX(),
-                                                               freeSpace[freeRectangleID].secondCoord.GetX())),
-                                       m_pcRNG->Uniform(CRange(freeSpace[freeRectangleID].firstCoord.GetY(),
-                                                               freeSpace[freeRectangleID].secondCoord.GetY()))));
 
-       if (aMotionType == 1){ // diagonal
-          oneRobotPath.insert(oneRobotPath.begin(), CVector2(4.2f, startRobotPos.GetY()));
-          pointsCount = 2;
-       } else { // perpendicular
-          oneRobotPath.insert(oneRobotPath.begin(), CVector2(oneRobotPath[0].GetX(), startRobotPos.GetY()));
-          pointsCount = 2;
-       }
+      loadCoords = *aLoadCoords;
+      unloadCoords = *aUnloadCoords;
+      std::cout << "Predefined goals." << std::endl;
+
    }
 
+   if (aMotionType == 1){ // diagonal
+    oneRobotPath.push_back(RoutePoint(CVector2(4.2f, startRobotPos.GetY()), 0));
+    oneRobotPath.push_back(RoutePoint(loadCoords, 1));
+    oneRobotPath.push_back(RoutePoint(CVector2(4.0f, unloadCoords.GetY()), 0));
+    oneRobotPath.push_back(RoutePoint(unloadCoords, 2));
+    pointsCount = 4;
+   } else { // perpendicular
+    oneRobotPath.push_back(RoutePoint(CVector2(loadCoords.GetX(), startRobotPos.GetY()), 0));
+    oneRobotPath.push_back(RoutePoint(loadCoords, 1));
+    oneRobotPath.push_back(RoutePoint(CVector2(loadCoords.GetX(), unloadCoords.GetY()), 0));
+    oneRobotPath.push_back(RoutePoint(CVector2(4.0f, unloadCoords.GetY()), 0));
+    oneRobotPath.push_back(RoutePoint(unloadCoords, 2));
+    pointsCount = 5;
+   }
+
+
    // std::cout << freeRectangleID << std::endl;
-   // std::cout << "GoalPos: " << oneRobotPath[0].GetX() << " " << oneRobotPath[0].GetY() << std::endl;
+   std::cout << "GoalPos: " << oneRobotPath[1].coords.GetX() << " " << oneRobotPath[1].coords.GetY() << std::endl;
 
    return oneRobotPath;
 }
 
-std::vector<CVector2> PathPlanning::getGoals(){
+std::vector<PathPlanning::RoutePoint> PathPlanning::getGoals(){
    return m_cGoalsPos;
 }
 
