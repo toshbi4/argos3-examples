@@ -29,7 +29,7 @@ WmsController::WmsController() :
    m_pcPosSens(NULL),
    m_pcRNG(NULL),
    hasCargo (false),
-   pid {0.1, 100, -100, 1, 0.01, 0.5}
+   pid {0.01, 100, -100, 1, 0.01, 0.5}
 {}
 
 void WmsController::Init(TConfigurationNode& t_node) {
@@ -192,76 +192,6 @@ void WmsController::pidControl(const CVector2& c_heading){
    }
 
    m_pcWheels->SetLinearVelocity(fLeftWheelSpeed, fRightWheelSpeed);
-}
-
-void WmsController::simpleControl(const CVector2& c_heading){
-    CRadians cHeadingAngle = c_heading.Angle().SignedNormalize() - CRadians::PI_OVER_TWO;
-    /* Get the length of the heading vector */
-    Real fHeadingLength = c_heading.Length();
-    /* Clamp the speed so that it's not greater than MaxSpeed */
-    Real fBaseAngularWheelSpeed = Min<Real>(fHeadingLength, m_sWheelTurningParams.MaxSpeed);
-
-    /* State transition logic */
-    if(m_sWheelTurningParams.TurningMechanism == SWheelTurningParams::HARD_TURN) {
-       if(Abs(cHeadingAngle) <= m_sWheelTurningParams.SoftTurnOnAngleThreshold) {
-          m_sWheelTurningParams.TurningMechanism = SWheelTurningParams::SOFT_TURN;
-       }
-    }
-    if(m_sWheelTurningParams.TurningMechanism == SWheelTurningParams::SOFT_TURN) {
-       if(Abs(cHeadingAngle) > m_sWheelTurningParams.HardTurnOnAngleThreshold) {
-          m_sWheelTurningParams.TurningMechanism = SWheelTurningParams::HARD_TURN;
-       }
-       else if(Abs(cHeadingAngle) <= m_sWheelTurningParams.NoTurnAngleThreshold) {
-          m_sWheelTurningParams.TurningMechanism = SWheelTurningParams::NO_TURN;
-       }
-    }
-    if(m_sWheelTurningParams.TurningMechanism == SWheelTurningParams::NO_TURN) {
-       if(Abs(cHeadingAngle) > m_sWheelTurningParams.HardTurnOnAngleThreshold) {
-          m_sWheelTurningParams.TurningMechanism = SWheelTurningParams::HARD_TURN;
-       }
-       else if(Abs(cHeadingAngle) > m_sWheelTurningParams.NoTurnAngleThreshold) {
-          m_sWheelTurningParams.TurningMechanism = SWheelTurningParams::SOFT_TURN;
-       }
-    }
-
-    /* Wheel speeds based on current turning state */
-    Real fSpeed1, fSpeed2;
-    switch(m_sWheelTurningParams.TurningMechanism) {
-       case SWheelTurningParams::NO_TURN: {
-          /* Just go straight */
-          fSpeed1 = fBaseAngularWheelSpeed;
-          fSpeed2 = fBaseAngularWheelSpeed;
-          break;
-       }
-       case SWheelTurningParams::SOFT_TURN: {
-          /* Both wheels go straight, but one is faster than the other */
-          Real fSpeedFactor = (m_sWheelTurningParams.HardTurnOnAngleThreshold - Abs(cHeadingAngle)) / m_sWheelTurningParams.HardTurnOnAngleThreshold;
-          fSpeed1 = fBaseAngularWheelSpeed - fBaseAngularWheelSpeed * (1.0 - fSpeedFactor);
-          fSpeed2 = fBaseAngularWheelSpeed + fBaseAngularWheelSpeed * (1.0 - fSpeedFactor);
-          break;
-       }
-       case SWheelTurningParams::HARD_TURN: {
-          /* Opposite wheel speeds */
-          fSpeed1 = -m_sWheelTurningParams.MaxSpeed;
-          fSpeed2 =  m_sWheelTurningParams.MaxSpeed;
-          break;
-       }
-    }
-
-    /* Apply the calculated speeds to the appropriate wheels */
-    Real fLeftWheelSpeed, fRightWheelSpeed;
-    if(cHeadingAngle > CRadians::ZERO) {
-       /* Turn Left */
-       fLeftWheelSpeed  = fSpeed1;
-       fRightWheelSpeed = fSpeed2;
-    }
-    else {
-       /* Turn Right */
-       fLeftWheelSpeed  = fSpeed2;
-       fRightWheelSpeed = fSpeed1;
-    }
-    /* Finally, set the wheel speeds */
-    m_pcWheels->SetLinearVelocity(fLeftWheelSpeed, fRightWheelSpeed);
 }
 
 REGISTER_CONTROLLER(WmsController, "wms_controller")

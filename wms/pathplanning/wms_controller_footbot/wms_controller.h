@@ -84,7 +84,6 @@ private:
 
    void SetWheelSpeedsFromLocalVector(const CVector2& c_heading);
    void pidControl(const CVector2& c_heading);
-   void simpleControl(const CVector2& c_heading);
 
    CVector2 speedVector;
    CCI_DifferentialSteeringActuator* m_pcWheels;
