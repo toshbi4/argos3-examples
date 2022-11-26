@@ -52,7 +52,7 @@ void WmsLoopFunctions::Init(TConfigurationNode& t_node) {
       GetNodeAttribute(tWorkspace, "motionType", motionType);
 
       CSpace::TMapPerType& m_cFootbots = GetSpace().GetEntitiesByType("foot-bot");
-      std::cout << m_cFootbots.size() << std::endl;
+      // std::cout << m_cFootbots.size() << std::endl;
 
       m_pcFloor = &GetSpace().GetFloorEntity();
 
@@ -80,7 +80,7 @@ void WmsLoopFunctions::Init(TConfigurationNode& t_node) {
 
           loadPoints.push_back(CVector2(x_load, y_load));
           unloadPoints.push_back(CVector2(x_unload, y_unload));
-          std::cout << loadPoints[loadPoints.size()-1].GetX() << " " << loadPoints[loadPoints.size()-1].GetY() << std::endl;
+          // std::cout << loadPoints[loadPoints.size()-1].GetX() << " " << loadPoints[loadPoints.size()-1].GetY() << std::endl;
       }
    } else {
       std::cout << "Goals are not predefined" << std::endl;
@@ -212,7 +212,7 @@ void WmsLoopFunctions::Reset() {
        cController.isWaitingNewTask = false;
     }
 
-    m_pcFloor->SetChanged();
+    // m_pcFloor->SetChanged();
 
 }
 
@@ -242,10 +242,21 @@ CColor WmsLoopFunctions::GetFloorColor(const CVector2& c_position_on_plane) {
 
    }
 
+//   if((c_position_on_plane - CVector2(-0.2f, 5.9f)).SquareLength() < m_fFoodSquareRadius) {
+//      return CColor::BLACK;
+//   }
+
+//   if((c_position_on_plane - CVector2(5.8f, -0.1f)).SquareLength() < m_fFoodSquareRadius) {
+//      return CColor::BLACK;
+//   }
+
    return CColor::WHITE;
 }
 
 void WmsLoopFunctions::PreStep() {
+
+   uint16_t finishedStep = 0;
+
    CSpace::TMapPerType& m_cFootbots = GetSpace().GetEntitiesByType("foot-bot");
    for(CSpace::TMapPerType::iterator it = m_cFootbots.begin();
       it != m_cFootbots.end();
@@ -254,8 +265,12 @@ void WmsLoopFunctions::PreStep() {
       CFootBotEntity& cFootBot = *any_cast<CFootBotEntity*>(it->second);
       WmsController& cController = dynamic_cast<WmsController&>(cFootBot.GetControllableEntity().GetController());
       if (cController.changeFloor){
-         m_pcFloor->SetChanged();
+         // m_pcFloor->SetChanged();
          cController.changeFloor = false;
+      }
+
+      if (!cController.stepInProcess) {
+         ++finishedStep;
       }
 
       if (cController.isWaitingNewTask){
@@ -277,14 +292,26 @@ void WmsLoopFunctions::PreStep() {
       }
 
       /* Add the current position of the foot-bot if it's sufficiently far from the last */
-      if(SquareDistance(cFootBot.GetEmbodiedEntity().GetOriginAnchor().Position,
-                        m_tWaypoints[&cFootBot].back()) > MIN_DISTANCE_SQUARED) {
-         m_tWaypoints[&cFootBot].push_back(CVector3(cFootBot.GetEmbodiedEntity().GetOriginAnchor().Position.GetX(),
-                                                    cFootBot.GetEmbodiedEntity().GetOriginAnchor().Position.GetY(),
-                                                    0.1f));
-      }
-
+//      if(SquareDistance(cFootBot.GetEmbodiedEntity().GetOriginAnchor().Position,
+//                        m_tWaypoints[&cFootBot].back()) > MIN_DISTANCE_SQUARED) {
+//         m_tWaypoints[&cFootBot].push_back(CVector3(cFootBot.GetEmbodiedEntity().GetOriginAnchor().Position.GetX(),
+//                                                    cFootBot.GetEmbodiedEntity().GetOriginAnchor().Position.GetY(),
+//                                                    0.1f));
+//      }
    }
+
+   // Discrete movements
+   if (finishedStep == m_cFootbots.size()) {
+      for(CSpace::TMapPerType::iterator it = m_cFootbots.begin();
+         it != m_cFootbots.end();
+         ++it) {
+         CFootBotEntity& cFootBot = *any_cast<CFootBotEntity*>(it->second);
+         WmsController& cController = dynamic_cast<WmsController&>(cFootBot.GetControllableEntity().GetController());
+         cController.stepInProcess = true;
+         cController.setStop(false);
+      }
+   }
+
 }
 
 REGISTER_LOOP_FUNCTIONS(WmsLoopFunctions, "wms_loop_functions")

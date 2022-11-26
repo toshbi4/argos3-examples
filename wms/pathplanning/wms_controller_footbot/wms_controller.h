@@ -79,6 +79,7 @@ public:
    bool stop;
    bool isWaitingNewTask;
    bool changeFloor;
+   bool stepInProcess;
 
 private:
 

@@ -32,18 +32,37 @@ void WmsQTUserFunctions::Draw(CFootBotEntity& c_entity) {
 void WmsQTUserFunctions::DrawInWorld() {
 
    /* Go through all the robot waypoints and draw them */
-   for(WmsLoopFunctions::TWaypointMap::const_iterator it = m_cTrajLF.GetWaypoints().begin();
-       it != m_cTrajLF.GetWaypoints().end();
-       ++it) {
-      DrawWaypoints(it->second);
-   }
+//   for(WmsLoopFunctions::TWaypointMap::const_iterator it = m_cTrajLF.GetWaypoints().begin();
+//       it != m_cTrajLF.GetWaypoints().end();
+//       ++it) {
+//      DrawWaypoints(it->second);
+//   }
 
 //      DrawCircle(
-//         CVector3(0.0f, 0.0f, 0.1f),
+//         CVector3(6.0f, 0.0f, 0.1f),
 //         CQuaternion(),
 //         0.1f,
 //         CColor::RED,
 //         true);
+
+   float chess = 0;
+   for (float xpos = -9.8f; xpos < 10.0f; xpos+=0.4f){
+
+      if (chess == 0) {
+         chess = 0.4;
+      } else {
+         chess = 0;
+      }
+      for (float ypos = -7.3f + chess; ypos < 7.7f; ypos+=0.8f){
+
+         DrawBox(CVector3(xpos, ypos, 0.0f), // postition
+                 CQuaternion(), // orientation
+                 CVector3(0.4f, 0.4f, 0.001f), // size
+                 CColor::GRAY90); // color
+      }
+
+   }
+
 }
 
 void WmsQTUserFunctions::DrawWaypoints(const std::vector<CVector3>& c_waypoints) {

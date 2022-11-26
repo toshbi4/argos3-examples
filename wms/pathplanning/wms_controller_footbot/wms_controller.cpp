@@ -24,6 +24,7 @@ WmsController::WmsController() :
    stop{false},
    isWaitingNewTask{true},
    changeFloor {false},
+   stepInProcess {true},
    speedVector {CVector2(0.0f, 0.0f)},
    m_pcWheels(NULL),
    m_pcPosSens(NULL),
@@ -113,6 +114,10 @@ void WmsController::ControlStep() {
 
    if((cPos - pathPlanning.getGoals()[pathPointNumber].coords).SquareLength() < m_fFoodSquareRadius) {
 
+      // Discrete movements
+      stepInProcess = false;
+      setStop(true);
+
       if (!changeFloor){
          changeFloor = true;
       }
@@ -124,7 +129,7 @@ void WmsController::ControlStep() {
       }
 
       if (pathPointNumber == pathPlanning.getPointsCount() - 1) {
-         if (pathPlanning.getRoutesCreated() < 3) {
+         if (pathPlanning.getRoutesCreated() < 300) {
             if (!hasCargo){
                //updateGoals();
                //setStop(false);
@@ -165,6 +170,7 @@ void WmsController::SetWheelSpeedsFromLocalVector(const CVector2& c_heading) {
 void WmsController::pidControl(const CVector2& c_heading){
 
    if (stop){
+       // std::cout << "Set Vel: " << "0.0f" << " " << "0.0f" << std::endl;
        m_pcWheels->SetLinearVelocity(0.0f, 0.0f);
        return;
    }
@@ -191,6 +197,7 @@ void WmsController::pidControl(const CVector2& c_heading){
       fRightWheelSpeed = -inc;
    }
 
+   // std::cout << "Set Vel: " << fLeftWheelSpeed << " " << fRightWheelSpeed << std::endl;
    m_pcWheels->SetLinearVelocity(fLeftWheelSpeed, fRightWheelSpeed);
 }
 
