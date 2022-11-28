@@ -16,10 +16,25 @@ static const Real MIN_DISTANCE = 0.05f;
 /* Convenience constant to avoid calculating the square root in PostStep() */
 static const Real MIN_DISTANCE_SQUARED = MIN_DISTANCE * MIN_DISTANCE;
 
+int16_t realToCellCoordX(float x){
+   return round((x + 0.2f) / 0.4f);
+}
+int16_t realToCellCoordY(float y){
+   return round((y + 0.1f) / 0.4f);
+}
+float cellToRealCoordX(int16_t x){
+   return x * 0.4f - 0.2f;
+}
+float cellToRealCoordY(int16_t y){
+   return y * 0.4f - 0.1f;
+}
+
 WmsLoopFunctions::WmsLoopFunctions() :
    m_cForagingArenaSideX(4.0f, 8.5f),
    m_cForagingArenaSideY(-6.5f, 6.5f),
    m_pcFloor(NULL),
+   m_pcRNG(NULL),
+   m_cGoalsPos{},
    borderIdNumber{0},
    loadedRobots{0},
    goalsPredefined{false},
@@ -186,33 +201,153 @@ void WmsLoopFunctions::createBorder(CVector2 firstCoordinate, CVector2 secondCoo
 
 }
 
+void WmsLoopFunctions::createPath(uint16_t aRobotId,
+                                  PathPlanning *aPathPlanning,
+                                  CVector3 aStartPos,
+                                  bool aHasCargo,
+                                  CVector2 *aLoadCoords,
+                                  CVector2 *aUnloadCoords){
+
+   std::vector<PathPlanning::RoutePoint> oneRobotPath;
+   CVector2 loadCoords;
+   CVector2 unloadCoords;
+
+   aPathPlanning->routesCreated++;
+   std::cout << aPathPlanning->routesCreated << std::endl;
+
+   if (aLoadCoords == nullptr){
+
+      m_pcRNG = CRandom::CreateRNG("argos");
+
+      uint8_t freeRectangleID = freeSpace.size() - 1;
+      loadCoords = CVector2(m_pcRNG->Uniform(CRange(freeSpace[freeRectangleID].firstCoord.GetX(),
+                                                    freeSpace[freeRectangleID].secondCoord.GetX())),
+                            m_pcRNG->Uniform(CRange(freeSpace[freeRectangleID].firstCoord.GetY(),
+                                                    freeSpace[freeRectangleID].secondCoord.GetY())));
+      freeRectangleID = rand() % (freeSpace.size() - 1);
+      unloadCoords = CVector2(m_pcRNG->Uniform(CRange(freeSpace[freeRectangleID].firstCoord.GetX(),
+                                                      freeSpace[freeRectangleID].secondCoord.GetX())),
+                              m_pcRNG->Uniform(CRange(freeSpace[freeRectangleID].firstCoord.GetY(),
+                                                      freeSpace[freeRectangleID].secondCoord.GetY())));
+      // std::cout << "Random goals." << std::endl;
+
+   } else {
+
+      loadCoords = *aLoadCoords;
+      unloadCoords = *aUnloadCoords;
+      std::cout << "Predefined goals." << std::endl;
+
+   }
+
+   if (motionType == 1){ // diagonal
+
+      aPathPlanning->pointsCount = 0;
+
+      std::cout << "cell load: " << realToCellCoordX(loadCoords.GetX()) << std::endl;
+      int8_t sign = ((realToCellCoordX(loadCoords.GetX()) - realToCellCoordX(aStartPos.GetX())) > 0) ? 1 : -1;
+      for (int xcell=realToCellCoordX(aStartPos.GetX());
+            xcell != realToCellCoordX(loadCoords.GetX()) + sign;
+            xcell += sign){
+
+         //std::cout << xcell << std::endl;
+         int16_t ycell = realToCellCoordY(aStartPos.GetY());
+         oneRobotPath.push_back(PathPlanning::RoutePoint(CVector2(cellToRealCoordX(xcell),
+                                                                cellToRealCoordY(ycell)), 0));
+         aPathPlanning->pointsCount += 1;
+
+      }
+
+      sign = ((realToCellCoordY(loadCoords.GetY()) - realToCellCoordY(oneRobotPath.back().coords.GetY())) > 0) ? 1 : -1;
+      for (int ycell=realToCellCoordY(oneRobotPath.back().coords.GetY());
+               ycell != realToCellCoordY(loadCoords.GetY()) + sign;
+               ycell += sign){
+
+         int16_t xcell = realToCellCoordX(oneRobotPath.back().coords.GetX());
+         oneRobotPath.push_back(PathPlanning::RoutePoint(CVector2(cellToRealCoordX(xcell),
+                                                                  cellToRealCoordY(ycell)), 0));
+         aPathPlanning->pointsCount += 1;
+
+      }
+
+      oneRobotPath.push_back(PathPlanning::RoutePoint(loadCoords, 1));
+      aPathPlanning->pointsCount += 1;
+
+      sign = ((realToCellCoordY(unloadCoords.GetY()) - realToCellCoordY(loadCoords.GetY())) > 0) ? 1 : -1;
+      for (int ycell=realToCellCoordY(loadCoords.GetY());
+               ycell != realToCellCoordY(unloadCoords.GetY()) + sign;
+               ycell += sign){
+
+         int16_t xcell = realToCellCoordX(loadCoords.GetX());
+         oneRobotPath.push_back(PathPlanning::RoutePoint(CVector2(cellToRealCoordX(xcell),
+                                                                  cellToRealCoordY(ycell)), 0));
+         aPathPlanning->pointsCount += 1;
+
+      }
+
+      sign = ((realToCellCoordX(unloadCoords.GetX()) - realToCellCoordX(oneRobotPath.back().coords.GetX())) > 0) ? 1 : -1;
+      for (int xcell=realToCellCoordX(oneRobotPath.back().coords.GetX());
+         xcell != realToCellCoordX(unloadCoords.GetX()) + sign;
+         xcell += sign){
+
+         int16_t ycell = realToCellCoordY(oneRobotPath.back().coords.GetY());
+         oneRobotPath.push_back(PathPlanning::RoutePoint(CVector2(cellToRealCoordX(xcell),
+                                                                cellToRealCoordY(ycell)), 0));
+         aPathPlanning->pointsCount += 1;
+
+      }
+
+      oneRobotPath.push_back(PathPlanning::RoutePoint(unloadCoords, 2));
+      aPathPlanning->pointsCount += 1;
+   } else { // perpendicular
+      oneRobotPath.push_back(PathPlanning::RoutePoint(CVector2(loadCoords.GetX(), aStartPos.GetY()), 0));
+      oneRobotPath.push_back(PathPlanning::RoutePoint(loadCoords, 1));
+      oneRobotPath.push_back(PathPlanning::RoutePoint(CVector2(loadCoords.GetX(), unloadCoords.GetY()), 0));
+      oneRobotPath.push_back(PathPlanning::RoutePoint(CVector2(4.0f, unloadCoords.GetY()), 0));
+      oneRobotPath.push_back(PathPlanning::RoutePoint(unloadCoords, 2));
+      aPathPlanning->pointsCount = 5;
+   }
+
+
+   // std::cout << freeRectangleID << std::endl;
+   // std::cout << "GoalPos: " << oneRobotPath[1].coords.GetX() << " " << oneRobotPath[1].coords.GetY() << std::endl;
+
+   while( m_cGoalsPos.size() < (aRobotId + 1) ){
+      m_cGoalsPos.push_back(std::vector<PathPlanning::RoutePoint>{});
+   }
+   m_cGoalsPos[aRobotId] = oneRobotPath;
+   aPathPlanning->m_cGoalsPos = oneRobotPath;
+}
+
 void WmsLoopFunctions::Reset() {
 
-    CSpace::TMapPerType& m_cFootbots = GetSpace().GetEntitiesByType("foot-bot");
-    for(CSpace::TMapPerType::iterator it = m_cFootbots.begin();
+   uint16_t robot_id = 0;
+   CSpace::TMapPerType& m_cFootbots = GetSpace().GetEntitiesByType("foot-bot");
+   for(CSpace::TMapPerType::iterator it = m_cFootbots.begin();
        it != m_cFootbots.end();
        ++it) {
 
-       CFootBotEntity& cFootBot = *any_cast<CFootBotEntity*>(it->second);
-       WmsController& cController = dynamic_cast<WmsController&>(cFootBot.GetControllableEntity().GetController());
-       if (goalsPredefined){
-          cController.pathPlanning.init(freeSpace,
-                                        cFootBot.GetEmbodiedEntity().GetOriginAnchor().Position,
-                                        cController.getCargoData(),
-                                        motionType,
-                                        &loadPoints[taskNumber],
-                                        &unloadPoints[taskNumber]);
-          ++taskNumber;
-       } else {
-          cController.pathPlanning.init(freeSpace,
-                                        cFootBot.GetEmbodiedEntity().GetOriginAnchor().Position,
-                                        cController.getCargoData(),
-                                        motionType);
-       }
-       cController.isWaitingNewTask = false;
-    }
+      CFootBotEntity& cFootBot = *any_cast<CFootBotEntity*>(it->second);
+      WmsController& cController = dynamic_cast<WmsController&>(cFootBot.GetControllableEntity().GetController());
+      if (goalsPredefined){
+         createPath(robot_id,
+                    &cController.pathPlanning,
+                    cFootBot.GetEmbodiedEntity().GetOriginAnchor().Position,
+                    cController.getCargoData(),
+                    &loadPoints[taskNumber],
+                    &unloadPoints[taskNumber]);
 
-    // m_pcFloor->SetChanged();
+         ++taskNumber;
+      } else {
+         createPath(robot_id,
+                    &cController.pathPlanning,
+                    cFootBot.GetEmbodiedEntity().GetOriginAnchor().Position,
+                    cController.getCargoData());
+      }
+      cController.isWaitingNewTask = false;
+      ++robot_id;
+   }
+
+   // m_pcFloor->SetChanged();
 
 }
 
@@ -234,9 +369,9 @@ CColor WmsLoopFunctions::GetFloorColor(const CVector2& c_position_on_plane) {
       CFootBotEntity& cFootBot = *any_cast<CFootBotEntity*>(it->second);
       WmsController& cController = dynamic_cast<WmsController&>(cFootBot.GetControllableEntity().GetController());
 
-      if((c_position_on_plane - cController.pathPlanning.getGoals()[cController.pathPointNumber].coords).SquareLength() < m_fFoodSquareRadius) {
-         return CColor::BLACK;
-      }
+//      if((c_position_on_plane - cController.pathPlanning.getGoals()[cController.pathPointNumber].coords).SquareLength() < m_fFoodSquareRadius) {
+//         return CColor::BLACK;
+//      }
 
       robot_id += 1;
 
@@ -256,7 +391,7 @@ CColor WmsLoopFunctions::GetFloorColor(const CVector2& c_position_on_plane) {
 void WmsLoopFunctions::PreStep() {
 
    uint16_t finishedStep = 0;
-
+   uint16_t robot_id = 0;
    CSpace::TMapPerType& m_cFootbots = GetSpace().GetEntitiesByType("foot-bot");
    for(CSpace::TMapPerType::iterator it = m_cFootbots.begin();
       it != m_cFootbots.end();
@@ -275,29 +410,34 @@ void WmsLoopFunctions::PreStep() {
 
       if (cController.isWaitingNewTask){
          if (goalsPredefined){
-            cController.pathPlanning.init(freeSpace,
-                                          cFootBot.GetEmbodiedEntity().GetOriginAnchor().Position,
-                                          cController.getCargoData(),
-                                          motionType,
-                                          &loadPoints[taskNumber],
-                                          &unloadPoints[taskNumber]);
+            createPath(robot_id,
+                       &cController.pathPlanning,
+                       cFootBot.GetEmbodiedEntity().GetOriginAnchor().Position,
+                       cController.getCargoData(),
+                       &loadPoints[taskNumber],
+                       &unloadPoints[taskNumber]);
+
             ++taskNumber;
+
          } else {
-            cController.pathPlanning.init(freeSpace,
-                                          cFootBot.GetEmbodiedEntity().GetOriginAnchor().Position,
-                                          cController.getCargoData(),
-                                          motionType);
+            createPath(robot_id,
+                       &cController.pathPlanning,
+                       cFootBot.GetEmbodiedEntity().GetOriginAnchor().Position,
+                       cController.getCargoData());
          }
          cController.isWaitingNewTask = false;
       }
 
       /* Add the current position of the foot-bot if it's sufficiently far from the last */
-//      if(SquareDistance(cFootBot.GetEmbodiedEntity().GetOriginAnchor().Position,
-//                        m_tWaypoints[&cFootBot].back()) > MIN_DISTANCE_SQUARED) {
-//         m_tWaypoints[&cFootBot].push_back(CVector3(cFootBot.GetEmbodiedEntity().GetOriginAnchor().Position.GetX(),
-//                                                    cFootBot.GetEmbodiedEntity().GetOriginAnchor().Position.GetY(),
-//                                                    0.1f));
-//      }
+      if(SquareDistance(cFootBot.GetEmbodiedEntity().GetOriginAnchor().Position,
+                        m_tWaypoints[&cFootBot].back()) > MIN_DISTANCE_SQUARED) {
+         m_tWaypoints[&cFootBot].push_back(CVector3(cFootBot.GetEmbodiedEntity().GetOriginAnchor().Position.GetX(),
+                                                    cFootBot.GetEmbodiedEntity().GetOriginAnchor().Position.GetY(),
+                                                    0.1f));
+      }
+
+      robot_id += 1;
+
    }
 
    // Discrete movements

@@ -1,6 +1,7 @@
 #ifndef PATHPLANNING_H
 #define PATHPLANNING_H
 
+#include <cstdlib>
 #include <stdint.h>
 #include <vector>
 
@@ -17,7 +18,7 @@ struct FreeRectangle {
    uint8_t type = 0; // 0 - unloading, 1 - loading
 };
 
-class PathPlanning {
+struct PathPlanning {
 
 public:
 
@@ -32,35 +33,17 @@ public:
       uint8_t type; // 0 - common, 1 - load, 2 - unload.
    };
 
-   PathPlanning();
-   void init(std::vector<FreeRectangle> freeSpace,
-             CVector3 startPos,
-             bool aHasCargo,
-             uint8_t aMotionType,
-             CVector2 *aLoadCoords = nullptr,
-             CVector2 *aUnloadCoords = nullptr);
+   PathPlanning():
+      routesCreated {0},
+      pointsCount{2}
+   {
 
-   std::vector<RoutePoint> getGoals();
-   uint16_t getPointsCount();
-
-   uint16_t getRoutesCreated(){
-       return routesCreated;
    }
 
-private:
-
-   std::vector<RoutePoint> robotPath(std::vector<FreeRectangle> freeSpace,
-                                     bool aHasCargo,
-                                     uint8_t aMotionType,
-                                     CVector2 *aLoadCoords = nullptr,
-                                     CVector2 *aUnloadCoords = nullptr);
-
-   uint8_t var;
-   uint16_t pointsCount;
-   CRandom::CRNG* m_pcRNG;
-   std::vector<RoutePoint> m_cGoalsPos;
-   CVector3 startRobotPos;
    uint16_t routesCreated;
+   uint16_t pointsCount;
+   std::vector<RoutePoint> m_cGoalsPos;
+
 };
 
 #endif //PATHPLANNING_H

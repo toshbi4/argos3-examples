@@ -36,6 +36,12 @@ private:
 
    void createScene();
    void createBorder(CVector2 firstCoordinate, CVector2 secondCoordinate);
+   void createPath(uint16_t aRobotId,
+                   PathPlanning *aPathPlanning,
+                   CVector3 aStartPos,
+                   bool aHasCargo,
+                   CVector2 *aLoadCoords = nullptr,
+                   CVector2 *aUnloadCoords = nullptr);
 
    // Get time stamp in microseconds.
    std::chrono::microseconds micros()
@@ -49,10 +55,12 @@ private:
    uint8_t motionType; // 0 - perpendicular, 1 - diagonal
    CRange<Real> m_cForagingArenaSideX, m_cForagingArenaSideY;
    CFloorEntity* m_pcFloor;
+   CRandom::CRNG* m_pcRNG;
 
    std::chrono::microseconds start;
 
    std::vector<FreeRectangle> freeSpace;
+   std::vector<std::vector<PathPlanning::RoutePoint>> m_cGoalsPos;
    uint8_t borderIdNumber;
    uint16_t loadedRobots;
    std::vector<CVector2> loadPoints;

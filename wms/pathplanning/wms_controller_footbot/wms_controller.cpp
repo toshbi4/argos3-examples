@@ -108,11 +108,11 @@ void WmsController::ControlStep() {
    CQuaternion cOrient = m_pcPosSens->GetReading().Orientation;
 
 
-   if (pathPointNumber <= pathPlanning.getPointsCount() - 1) {
-      setCoordinates(pathPlanning.getGoals()[pathPointNumber].coords);
+   if (pathPointNumber <= pathPlanning.pointsCount - 1) {
+      setCoordinates(pathPlanning.m_cGoalsPos[pathPointNumber].coords);
    }
 
-   if((cPos - pathPlanning.getGoals()[pathPointNumber].coords).SquareLength() < m_fFoodSquareRadius) {
+   if((cPos - pathPlanning.m_cGoalsPos[pathPointNumber].coords).SquareLength() < m_fFoodSquareRadius) {
 
       // Discrete movements
       stepInProcess = false;
@@ -122,16 +122,15 @@ void WmsController::ControlStep() {
          changeFloor = true;
       }
 
-      if (pathPlanning.getGoals()[pathPointNumber].type == 1){
+      if (pathPlanning.m_cGoalsPos[pathPointNumber].type == 1){
          setCargoData(true);
-      } else if (pathPlanning.getGoals()[pathPointNumber].type == 2){
+      } else if (pathPlanning.m_cGoalsPos[pathPointNumber].type == 2){
          setCargoData(false);
       }
 
-      if (pathPointNumber == pathPlanning.getPointsCount() - 1) {
-         if (pathPlanning.getRoutesCreated() < 300) {
+      if (pathPointNumber == pathPlanning.pointsCount - 1) {
+         if (pathPlanning.routesCreated < 300) {
             if (!hasCargo){
-               //updateGoals();
                //setStop(false);
                isWaitingNewTask = true;
                pathPointNumber = -1;

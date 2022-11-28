@@ -70,10 +70,6 @@ public:
        motionType = aMotionType;
    }
 
-   void updateGoals(){
-      pathPlanning.init(freeSpace, m_pcPosSens->GetReading().Position, getCargoData(), motionType);
-   };
-
    uint8_t pathPointNumber;
    PathPlanning pathPlanning;
    bool stop;
