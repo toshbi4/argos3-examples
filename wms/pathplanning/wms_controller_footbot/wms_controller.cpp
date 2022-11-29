@@ -95,6 +95,7 @@ void WmsController::ControlStep() {
 
    if (stop){
       SetWheelSpeedsFromLocalVector(CVector2(0.0f, 0.0f));
+      return;
    } else {
       SetWheelSpeedsFromLocalVector(m_sWheelTurningParams.MaxSpeed * speedVector);
    }

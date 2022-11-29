@@ -22,6 +22,10 @@ int16_t realToCellCoordX(float x){
 int16_t realToCellCoordY(float y){
    return round((y + 0.1f) / 0.4f);
 }
+CVector2 realToCellCoordXY(CVector2 realVec){
+   return CVector2(realToCellCoordX(realVec.GetX()),
+                   realToCellCoordX(realVec.GetY()));
+}
 float cellToRealCoordX(int16_t x){
    return x * 0.4f - 0.2f;
 }
@@ -201,6 +205,126 @@ void WmsLoopFunctions::createBorder(CVector2 firstCoordinate, CVector2 secondCoo
 
 }
 
+void WmsLoopFunctions::checkCrossing(uint16_t robotId){
+
+   uint16_t maxLength = 0;
+   for(uint16_t id = 0; id < m_cGoalsPos.size(); id++)
+   {
+      if (m_cGoalsPos[id].size() > maxLength){
+         maxLength = m_cGoalsPos[id].size();
+      }
+
+//      std::cout << "BeforePath: " << id << std::endl;
+
+//      for(uint16_t id1 = 0; id1 < m_cGoalsPos[id].size(); id1++){
+//         std::cout << realToCellCoordXY(m_cGoalsPos[id][id1].coords).GetX()
+//                   << " " << realToCellCoordXY(m_cGoalsPos[id][id1].coords).GetY() << std::endl;
+//      }
+   }
+
+   uint16_t i = 0;
+   while (i < maxLength)  // Iterate through the time
+   {
+         if (m_cGoalsPos[robotId].size() <= i)
+         {
+            break;
+         }
+
+         uint16_t pathNumber2 = 0;
+         while (pathNumber2 < m_cGoalsPos.size())
+         {
+            if (m_cGoalsPos[pathNumber2].size() <= i)
+            {
+               pathNumber2 += 1;
+               continue;
+            }
+            if (robotId != pathNumber2){
+               // Check collision
+//               std::cout << realToCellCoordXY(m_cGoalsPos[robotId][i].coords).GetX() << " "
+//                         << realToCellCoordXY(m_cGoalsPos[pathNumber2][i].coords).GetX() << std::endl;
+
+//               std::cout << realToCellCoordXY(m_cGoalsPos[robotId][i].coords).GetY() << " "
+//                         << realToCellCoordXY(m_cGoalsPos[pathNumber2][i].coords).GetY() << std::endl;
+//               std::cout << "---" << std::endl;
+
+               if (m_cGoalsPos[robotId][i].coords == m_cGoalsPos[pathNumber2][i].coords){
+                  m_cGoalsPos[robotId].insert(m_cGoalsPos[robotId].begin() + i, m_cGoalsPos[robotId][i-1]);
+                  std::cout << "Crossing." << std::endl;
+                  --i;
+                  continue;
+               // Check that we don't look at the last point
+               } else if((i + 1 < m_cGoalsPos[robotId].size()) & (i + 1 < m_cGoalsPos[robotId].size())) {
+                  // Check swap
+                  if ((realToCellCoordXY(m_cGoalsPos[robotId][i+1].coords) ==
+                       realToCellCoordXY(m_cGoalsPos[pathNumber2][i].coords)) &
+                      ((realToCellCoordXY(m_cGoalsPos[robotId][i].coords) ==
+                        realToCellCoordXY(m_cGoalsPos[pathNumber2][i+1].coords)))){
+                      std::cout << "Swap." << std::endl;
+                     if (realToCellCoordY(m_cGoalsPos[robotId][i].coords.GetY()) ==
+                         realToCellCoordY(m_cGoalsPos[robotId][i+1].coords.GetY()))
+                     {
+                        std::cout << "Swap Y." << std::endl;
+                        PathPlanning::RoutePoint newVector =
+                              PathPlanning::RoutePoint(CVector2(m_cGoalsPos[robotId][i].coords.GetX(),
+                                                       cellToRealCoordY(realToCellCoordY(m_cGoalsPos[robotId][i].coords.GetY()) + 1)),
+                                                       0);
+
+                        m_cGoalsPos[robotId].insert(m_cGoalsPos[robotId].begin() + i + 1,
+                                                        newVector);
+
+                        newVector = PathPlanning::RoutePoint(CVector2(m_cGoalsPos[robotId][i+1].coords.GetX(),
+                                                             cellToRealCoordY(realToCellCoordY(m_cGoalsPos[robotId][i+1].coords.GetY()) - 1)),
+                                                             0);
+
+                        m_cGoalsPos[robotId].insert(m_cGoalsPos[robotId].begin() + i + 2,
+                                                    newVector);
+                     }
+                     else
+                     {
+                        std::cout << "Swap X." << std::endl;
+                        PathPlanning::RoutePoint newVector =
+                              PathPlanning::RoutePoint(CVector2(cellToRealCoordX(realToCellCoordX(m_cGoalsPos[robotId][i].coords.GetX()) + 1),
+                                                       m_cGoalsPos[robotId][i].coords.GetY()),
+                                                       0);
+
+                        m_cGoalsPos[robotId].insert(m_cGoalsPos[robotId].begin() + i + 1,
+                                                    newVector);
+
+                        newVector = PathPlanning::RoutePoint(CVector2(cellToRealCoordX(realToCellCoordX(m_cGoalsPos[robotId][i+1].coords.GetX()) - 1),
+                                                             m_cGoalsPos[robotId][i+1].coords.GetY()),
+                                                             0);
+
+                        m_cGoalsPos[robotId].insert(m_cGoalsPos[robotId].begin() + i + 2,
+                                                    newVector);
+
+//                      std::cout << realToCellCoordXY(m_cGoalsPos[1][i + 1].coords).GetX()
+//                                << " " << realToCellCoordXY(m_cGoalsPos[1][i + 1].coords).GetY() << std::endl;
+
+                     }
+                     --i;
+                     continue;
+                  }
+               }
+            }
+            ++pathNumber2;
+      }
+      ++i;
+   }
+
+
+//   for(uint16_t id = 0; id < m_cGoalsPos.size(); id++)
+//   {
+
+//      std::cout << "AfterPath: " << id << std::endl;
+
+//      for(uint16_t id1 = 0; id1 < m_cGoalsPos[id].size(); id1++){
+//         std::cout << realToCellCoordXY(m_cGoalsPos[id][id1].coords).GetX()
+//                   << " " << realToCellCoordXY(m_cGoalsPos[id][id1].coords).GetY() << std::endl;
+//      }
+//   }
+
+}
+
 void WmsLoopFunctions::createPath(uint16_t aRobotId,
                                   PathPlanning *aPathPlanning,
                                   CVector3 aStartPos,
@@ -241,8 +365,6 @@ void WmsLoopFunctions::createPath(uint16_t aRobotId,
 
    if (motionType == 1){ // diagonal
 
-      aPathPlanning->pointsCount = 0;
-
       std::cout << "cell load: " << realToCellCoordX(loadCoords.GetX()) << std::endl;
       int8_t sign = ((realToCellCoordX(loadCoords.GetX()) - realToCellCoordX(aStartPos.GetX())) > 0) ? 1 : -1;
       for (int xcell=realToCellCoordX(aStartPos.GetX());
@@ -252,8 +374,7 @@ void WmsLoopFunctions::createPath(uint16_t aRobotId,
          //std::cout << xcell << std::endl;
          int16_t ycell = realToCellCoordY(aStartPos.GetY());
          oneRobotPath.push_back(PathPlanning::RoutePoint(CVector2(cellToRealCoordX(xcell),
-                                                                cellToRealCoordY(ycell)), 0));
-         aPathPlanning->pointsCount += 1;
+                                                                  cellToRealCoordY(ycell)), 0));
 
       }
 
@@ -265,12 +386,10 @@ void WmsLoopFunctions::createPath(uint16_t aRobotId,
          int16_t xcell = realToCellCoordX(oneRobotPath.back().coords.GetX());
          oneRobotPath.push_back(PathPlanning::RoutePoint(CVector2(cellToRealCoordX(xcell),
                                                                   cellToRealCoordY(ycell)), 0));
-         aPathPlanning->pointsCount += 1;
 
       }
 
       oneRobotPath.push_back(PathPlanning::RoutePoint(loadCoords, 1));
-      aPathPlanning->pointsCount += 1;
 
       sign = ((realToCellCoordY(unloadCoords.GetY()) - realToCellCoordY(loadCoords.GetY())) > 0) ? 1 : -1;
       for (int ycell=realToCellCoordY(loadCoords.GetY());
@@ -280,31 +399,27 @@ void WmsLoopFunctions::createPath(uint16_t aRobotId,
          int16_t xcell = realToCellCoordX(loadCoords.GetX());
          oneRobotPath.push_back(PathPlanning::RoutePoint(CVector2(cellToRealCoordX(xcell),
                                                                   cellToRealCoordY(ycell)), 0));
-         aPathPlanning->pointsCount += 1;
 
       }
 
       sign = ((realToCellCoordX(unloadCoords.GetX()) - realToCellCoordX(oneRobotPath.back().coords.GetX())) > 0) ? 1 : -1;
-      for (int xcell=realToCellCoordX(oneRobotPath.back().coords.GetX());
+      for (int xcell=realToCellCoordX(oneRobotPath.back().coords.GetX() + sign);
          xcell != realToCellCoordX(unloadCoords.GetX()) + sign;
          xcell += sign){
 
          int16_t ycell = realToCellCoordY(oneRobotPath.back().coords.GetY());
          oneRobotPath.push_back(PathPlanning::RoutePoint(CVector2(cellToRealCoordX(xcell),
                                                                 cellToRealCoordY(ycell)), 0));
-         aPathPlanning->pointsCount += 1;
 
       }
 
       oneRobotPath.push_back(PathPlanning::RoutePoint(unloadCoords, 2));
-      aPathPlanning->pointsCount += 1;
    } else { // perpendicular
       oneRobotPath.push_back(PathPlanning::RoutePoint(CVector2(loadCoords.GetX(), aStartPos.GetY()), 0));
       oneRobotPath.push_back(PathPlanning::RoutePoint(loadCoords, 1));
       oneRobotPath.push_back(PathPlanning::RoutePoint(CVector2(loadCoords.GetX(), unloadCoords.GetY()), 0));
       oneRobotPath.push_back(PathPlanning::RoutePoint(CVector2(4.0f, unloadCoords.GetY()), 0));
       oneRobotPath.push_back(PathPlanning::RoutePoint(unloadCoords, 2));
-      aPathPlanning->pointsCount = 5;
    }
 
 
@@ -315,7 +430,9 @@ void WmsLoopFunctions::createPath(uint16_t aRobotId,
       m_cGoalsPos.push_back(std::vector<PathPlanning::RoutePoint>{});
    }
    m_cGoalsPos[aRobotId] = oneRobotPath;
-   aPathPlanning->m_cGoalsPos = oneRobotPath;
+   checkCrossing(aRobotId);
+   aPathPlanning->m_cGoalsPos = m_cGoalsPos[aRobotId];
+   aPathPlanning->pointsCount = m_cGoalsPos[aRobotId].size();
 }
 
 void WmsLoopFunctions::Reset() {

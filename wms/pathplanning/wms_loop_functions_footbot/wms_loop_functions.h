@@ -36,6 +36,7 @@ private:
 
    void createScene();
    void createBorder(CVector2 firstCoordinate, CVector2 secondCoordinate);
+   void checkCrossing(uint16_t robotId);
    void createPath(uint16_t aRobotId,
                    PathPlanning *aPathPlanning,
                    CVector3 aStartPos,
