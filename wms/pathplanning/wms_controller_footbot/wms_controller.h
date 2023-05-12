@@ -3,6 +3,7 @@
 
 #include <argos3/core/control_interface/ci_controller.h>
 #include <argos3/plugins/robots/generic/control_interface/ci_differential_steering_actuator.h>
+#include <argos3/plugins/robots/generic/control_interface/ci_positioning_sensor.h>
 #include <argos3/core/utility/math/rng.h>
 #include <argos3/core/utility/math/vector2.h>
 #include <argos3/core/utility/math/quaternion.h>
@@ -42,10 +43,9 @@ public:
 
    virtual ~WmsController() {}
 
-
    virtual void Init(TConfigurationNode& t_node);
 
-   void setCoordinates(CVector2& cPos, CQuaternion& cOrient, CVector2& cGoalPos);
+   void setCoordinates(CVector2& cGoalPos);
 
 
    virtual void ControlStep();
@@ -57,27 +57,43 @@ public:
       return hasCargo;
    }
    void setCargoData(bool val){
-       hasCargo = val;
+      hasCargo = val;
    }
    void setStop(bool val){
-       stop = val;
+      stop = val;
+   }
+   void setFreeSpace(std::vector<FreeRectangle> aFreeSpace){
+      freeSpace = aFreeSpace;
+   }
+   void setParameters(Real aRadius, uint8_t aMotionType){
+       m_fFoodSquareRadius = aRadius;
+       motionType = aMotionType;
    }
 
    uint8_t pathPointNumber;
    PathPlanning pathPlanning;
+   bool stop;
+   bool isWaitingNewTask;
+   bool changeFloor;
+   bool stepInProcess;
 
 private:
 
    void SetWheelSpeedsFromLocalVector(const CVector2& c_heading);
    void pidControl(const CVector2& c_heading);
-   void simpleControl(const CVector2& c_heading);
 
    CVector2 speedVector;
    CCI_DifferentialSteeringActuator* m_pcWheels;
+   /* Pointer to the positioning sensor */
+   CCI_PositioningSensor* m_pcPosSens;
+
    CRandom::CRNG* m_pcRNG;
    SWheelTurningParams m_sWheelTurningParams;
+   Real m_fFoodSquareRadius;
+   uint8_t motionType; // 0 - perpendicular, 1 - diagonal
+
+   std::vector<FreeRectangle> freeSpace;
    bool hasCargo;
-   bool stop;
    PID pid;
 };
 

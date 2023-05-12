@@ -1,6 +1,6 @@
 add_library(wms_controller_pathplanning SHARED wms_controller.h wms_controller.cpp)
 add_library(pid SHARED pid.h pid.cpp)
-add_library(pathplanning SHARED pathplanning.h pathplanning.cpp)
+add_library(pathplanning SHARED pathplanning.h)
 target_link_libraries(
   pathplanning
   pid

@@ -18,7 +18,7 @@ public:
    using mcs = std::chrono::microseconds;
 
    WmsLoopFunctions();
-   virtual ~WmsLoopFunctions() {}
+   ~WmsLoopFunctions();
 
    virtual void Init(TConfigurationNode& t_tree);
    virtual void Reset();
@@ -26,10 +26,23 @@ public:
    virtual CColor GetFloorColor(const CVector2& c_position_on_plane);
    virtual void PreStep();
 
+   typedef std::map<CFootBotEntity*, std::vector<CVector3> > TWaypointMap;
+   TWaypointMap m_tWaypoints;
+   inline const TWaypointMap& GetWaypoints() const {
+      return m_tWaypoints;
+   }
+
 private:
 
    void createScene();
    void createBorder(CVector2 firstCoordinate, CVector2 secondCoordinate);
+   void checkCrossing(uint16_t robotId);
+   void createPath(uint16_t aRobotId,
+                   PathPlanning *aPathPlanning,
+                   CVector3 aStartPos,
+                   bool aHasCargo,
+                   CVector2 *aLoadCoords = nullptr,
+                   CVector2 *aUnloadCoords = nullptr);
 
    // Get time stamp in microseconds.
    std::chrono::microseconds micros()
@@ -40,17 +53,21 @@ private:
    }
 
    Real m_fFoodSquareRadius;
+   uint8_t motionType; // 0 - perpendicular, 1 - diagonal
    CRange<Real> m_cForagingArenaSideX, m_cForagingArenaSideY;
    CFloorEntity* m_pcFloor;
-
-//   std::string m_strOutput;
-//   std::ofstream m_cOutput;
+   CRandom::CRNG* m_pcRNG;
 
    std::chrono::microseconds start;
 
    std::vector<FreeRectangle> freeSpace;
+   std::vector<std::vector<PathPlanning::RoutePoint>> m_cGoalsPos;
    uint8_t borderIdNumber;
    uint16_t loadedRobots;
+   std::vector<CVector2> loadPoints;
+   std::vector<CVector2> unloadPoints;
+   bool goalsPredefined;
+   uint16_t taskNumber;
 };
 
 #endif
