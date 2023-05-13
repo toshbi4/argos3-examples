@@ -9,10 +9,6 @@ endif(CMAKE_BUILD_TYPE STREQUAL "")
 # Deactivate RPATH for MacOSX
 set(CMAKE_MACOSX_RPATH 0)
 
-# Set the path where CMake will find additional scripts
-set(CMAKE_MODULE_PATH $ENV{CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake)
-set(CMAKE_PREFIX_PATH $ENV{CMAKE_PREFIX_PATH} ${CMAKE_SOURCE_DIR}/cmake)
-
 # Use C++17
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -23,21 +19,6 @@ find_package(ARGoS REQUIRED)
 include_directories(${CMAKE_SOURCE_DIR} ${ARGOS_INCLUDE_DIRS})
 link_directories(${ARGOS_LIBRARY_DIR})
 link_libraries(${ARGOS_LDFLAGS})
-
-# Look for the (optional) galib library
-find_package(GALIB)
-if(GALIB_FOUND)
-  include_directories(${GALIB_INCLUDE_DIRS})
-endif(GALIB_FOUND)
-
-# Descend into the controllers directory
-add_subdirectory(controllers)
-
-# Descend into the loop_functions directory
-add_subdirectory(loop_functions)
-
-# Descend into the embedding directory
-add_subdirectory(embedding)
 
 add_subdirectory(sim_test_footbot)
 add_subdirectory(sim_test_pipuck)
